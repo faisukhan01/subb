@@ -1,0 +1,81 @@
+# SUBB SURFERS — tournament service (Spring Boot / Java 21).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tournament-java
+  namespace: subb
+  labels:
+    app: tournament-java
+    app.kubernetes.io/part-of: subb-surfers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tournament-java
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: tournament-java
+    spec:
+      containers:
+        - name: tournament-java
+          image: ghcr.io/faisukhan01/subb-tournament-java:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4003
+          env:
+            - name: PORT
+              value: "4003"
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: subb-config
+                  key: APP_ENV
+            - name: JAVA_OPTS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 3
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tournament-java
+  namespace: subb
+  labels:
+    app: tournament-java
+spec:
+  type: ClusterIP
+  selector:
+    app: tournament-java
+  ports:
+    - name: http
+      port: 4003
+      targetPort: http

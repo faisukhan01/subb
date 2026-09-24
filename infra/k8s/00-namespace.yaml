@@ -1,0 +1,8 @@
+# SUBB SURFERS — namespace for every game workload.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: subb
+  labels:
+    app.kubernetes.io/part-of: subb-surfers
+    pod-security.kubernetes.io/enforce: baseline

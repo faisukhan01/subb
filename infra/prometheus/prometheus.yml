@@ -1,0 +1,43 @@
+# SUBB SURFERS — Prometheus scrape configuration.
+# Inside the compose network the services are reachable by service name.
+# The web build exposes metrics at :3000 (Next.js instrumentation);
+# go and python expose /metrics on their API ports.
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+  external_labels:
+    project: subb-surfers
+    environment: compose
+
+scrape_configs:
+  # leaderboard-go — Gin + prometheus/client_golang on the API port.
+  - job_name: leaderboard-go
+    static_configs:
+      - targets: ["go:4001"]
+        labels:
+          service: leaderboard
+    metrics_path: /metrics
+
+  # ml-python — FastAPI on :4002 (prometheus-fastapi-instrumentator style
+  # /metrics endpoint).
+  - job_name: ml-python
+    static_configs:
+      - targets: ["python:4002"]
+        labels:
+          service: difficulty-ml
+    metrics_path: /metrics
+
+  # web — Next.js server on :3000.
+  - job_name: web
+    static_configs:
+      - targets: ["web:3000"]
+        labels:
+          service: web
+    metrics_path: /metrics
+
+  # Prometheus itself — always useful for dashboards on scrape health.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

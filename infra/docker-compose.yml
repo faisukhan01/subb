@@ -1,0 +1,217 @@
+# SUBB SURFERS — local / staging stack.
+#
+#   docker compose -f infra/docker-compose.yml up -d --build
+#
+# Topology (single bridge network "subbnet"):
+#
+#   browser → nginx :8080 ─┬─ /api/go/         → go:4001      (leaderboard API)
+#                          ├─ /api/ml/         → python:4002  (difficulty ML)
+#                          ├─ /api/tournaments/→ java:4003    (tournaments)
+#                          ├─ /api/anticheat/  → csharp:4004  (score validation)
+#                          └─ /                → web:3000     (Next.js game + UI)
+#   prometheus :9090 scrapes go / python / web metrics
+#   grafana    :3001 dashboards (datasource auto-provisioned)
+#
+# Only nginx, prometheus and grafana publish host ports; the app services stay
+# inside the bridge network.
+
+name: subb-surfers
+
+services:
+  # ------------------------------------------------------------------ web
+  web:
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        NEXT_TELEMETRY_DISABLED: "1"
+    image: ghcr.io/faisukhan01/subb-web:local
+    container_name: subb-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      # The web build talks to the go leaderboard through the nginx gateway
+      # when running in a browser, and can call it directly server-side:
+      LEADERBOARD_API_URL: http://go:4001
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - subbnet
+
+  # ------------------------------------------------------------------- go
+  go:
+    build:
+      context: ../services/leaderboard-go
+    image: ghcr.io/faisukhan01/subb-leaderboard-go:local
+    container_name: subb-go
+    restart: unless-stopped
+    environment:
+      PORT: "4001"
+      APP_ENV: production
+      GIN_MODE: release
+    # Not published to the host — reached via nginx /api/go/ and Prometheus.
+    expose:
+      - "4001"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4001/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    networks:
+      - subbnet
+
+  # --------------------------------------------------------------- python
+  python:
+    build:
+      context: ../services/ml-python
+    image: ghcr.io/faisukhan01/subb-ml-python:local
+    container_name: subb-python
+    restart: unless-stopped
+    environment:
+      PORT: "4002"
+      MODEL_DIR: /srv/ml/models
+    expose:
+      - "4002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:4002/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - subbnet
+
+  # ----------------------------------------------------------------- java
+  java:
+    build:
+      context: ../services/tournament-java
+    image: ghcr.io/faisukhan01/subb-tournament-java:local
+    container_name: subb-java
+    restart: unless-stopped
+    environment:
+      PORT: "4003"
+      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+    expose:
+      - "4003"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4003/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 25s
+      retries: 5
+    networks:
+      - subbnet
+
+  # --------------------------------------------------------------- csharp
+  csharp:
+    build:
+      context: ../services/anticheat-csharp
+    image: ghcr.io/faisukhan01/subb-anticheat-csharp:local
+    container_name: subb-csharp
+    restart: unless-stopped
+    environment:
+      PORT: "4004"
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:4004
+    expose:
+      - "4004"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4004/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    networks:
+      - subbnet
+
+  # ---------------------------------------------------------------- nginx
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: subb-nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      web:
+        condition: service_healthy
+      go:
+        condition: service_healthy
+      python:
+        condition: service_healthy
+      java:
+        condition: service_healthy
+      csharp:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - subbnet
+
+  # ----------------------------------------------------------- prometheus
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: subb-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - subbnet
+
+  # -------------------------------------------------------------- grafana
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: subb-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin # dev only — override in real deploys
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - subbnet
+
+networks:
+  subbnet:
+    driver: bridge
+    name: subbnet
+
+volumes:
+  prometheus_data:
+  grafana_data:

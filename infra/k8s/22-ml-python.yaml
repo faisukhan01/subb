@@ -1,0 +1,85 @@
+# SUBB SURFERS — difficulty ML service (FastAPI).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-python
+  namespace: subb
+  labels:
+    app: ml-python
+    app.kubernetes.io/part-of: subb-surfers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-python
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: ml-python
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4002"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: ml-python
+          image: ghcr.io/faisukhan01/subb-ml-python:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4002
+          env:
+            - name: PORT
+              value: "4002"
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: subb-config
+                  key: APP_ENV
+            - name: MODEL_DIR
+              value: /srv/ml/models
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-python
+  namespace: subb
+  labels:
+    app: ml-python
+spec:
+  type: ClusterIP
+  selector:
+    app: ml-python
+  ports:
+    - name: http
+      port: 4002
+      targetPort: http

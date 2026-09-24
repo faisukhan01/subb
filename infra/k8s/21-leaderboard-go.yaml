@@ -1,0 +1,88 @@
+# SUBB SURFERS — leaderboard API (Go + Gin + Prometheus).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaderboard-go
+  namespace: subb
+  labels:
+    app: leaderboard-go
+    app.kubernetes.io/part-of: subb-surfers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: leaderboard-go
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: leaderboard-go
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4001"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: leaderboard-go
+          image: ghcr.io/faisukhan01/subb-leaderboard-go:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4001
+          env:
+            - name: PORT
+              value: "4001"
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: subb-config
+                  key: APP_ENV
+            - name: GIN_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: subb-config
+                  key: GIN_MODE
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 2
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leaderboard-go
+  namespace: subb
+  labels:
+    app: leaderboard-go
+spec:
+  type: ClusterIP
+  selector:
+    app: leaderboard-go
+  ports:
+    - name: http
+      port: 4001
+      targetPort: http

@@ -1,0 +1,81 @@
+# SUBB SURFERS — anti-cheat score validation (.NET 8 minimal API).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anticheat-csharp
+  namespace: subb
+  labels:
+    app: anticheat-csharp
+    app.kubernetes.io/part-of: subb-surfers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: anticheat-csharp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: anticheat-csharp
+    spec:
+      containers:
+        - name: anticheat-csharp
+          image: ghcr.io/faisukhan01/subb-anticheat-csharp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4004
+          env:
+            - name: PORT
+              value: "4004"
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: subb-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              value: http://+:4004
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anticheat-csharp
+  namespace: subb
+  labels:
+    app: anticheat-csharp
+spec:
+  type: ClusterIP
+  selector:
+    app: anticheat-csharp
+  ports:
+    - name: http
+      port: 4004
+      targetPort: http

@@ -1,0 +1,19 @@
+# SUBB SURFERS — shared configuration consumed by the Deployments below.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subb-config
+  namespace: subb
+  labels:
+    app.kubernetes.io/part-of: subb-surfers
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  # The web build calls the go leaderboard service in-cluster.
+  LEADERBOARD_API_URL: "http://leaderboard-go.subb.svc.cluster.local:4001"
+  # Base URLs used by services that call each other through the cluster DNS.
+  TOURNAMENT_API_URL: "http://tournament-java.subb.svc.cluster.local:4003"
+  ANTICHEAT_API_URL: "http://anticheat-csharp.subb.svc.cluster.local:4004"
+  ML_API_URL: "http://ml-python.subb.svc.cluster.local:4002"
+  GIN_MODE: "release"
+  ASPNETCORE_ENVIRONMENT: "Production"

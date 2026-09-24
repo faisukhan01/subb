@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) and adjust before `terraform apply`.
+aws_region = "us-east-1"
+image_tag  = "latest"
+app_count  = 2

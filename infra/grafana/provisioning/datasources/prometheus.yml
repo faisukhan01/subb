@@ -1,0 +1,16 @@
+# Grafana datasource provisioning — auto-wires Prometheus on first boot.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: subb-prometheus
+    type: prometheus
+    access: proxy
+    # Service name on the shared compose/K8s network, not localhost.
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST
+      manageAlerts: false

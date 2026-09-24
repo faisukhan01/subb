@@ -1,0 +1,64 @@
+# SUBB SURFERS — edge ingress.
+# Routing mirrors infra/nginx/nginx.conf:
+#   /api/go/          → leaderboard-go:4001  (prefix stripped)
+#   /api/ml/          → ml-python:4002       (prefix stripped)
+#   /api/tournaments/ → tournament-java:4003 (prefix stripped)
+#   /api/anticheat/   → anticheat-csharp:4004 (prefix stripped)
+#   /                 → web:3000
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: subb-ingress
+  namespace: subb
+  labels:
+    app.kubernetes.io/part-of: subb-surfers
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "75"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # --- leaderboard (go), prefix stripped via capture group ---
+          - path: /api/go(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: leaderboard-go
+                port:
+                  number: 4001
+          # --- difficulty ML (python) ---
+          - path: /api/ml(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ml-python
+                port:
+                  number: 4002
+          # --- tournaments (java) ---
+          - path: /api/tournaments(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tournament-java
+                port:
+                  number: 4003
+          # --- anti-cheat (csharp) ---
+          - path: /api/anticheat(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: anticheat-csharp
+                port:
+                  number: 4004
+          # --- everything else: web ---
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: web
+                port:
+                  number: 3000
