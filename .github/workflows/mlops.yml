@@ -1,0 +1,46 @@
+# SUBB SURFERS — MLOps: weekly difficulty-model retraining.
+#
+# Runs services/ml-python/ml/train_difficulty_model.py, which (re)fits the
+# difficulty model and commits any updated artifacts back to the repo. The
+# models are consumed by the ml-python service (MODEL_DIR).
+
+name: MLOps
+
+on:
+  schedule:
+    # Every Monday 04:00 UTC.
+    - cron: "0 4 * * 1"
+  workflow_dispatch: {} # manual retrain on demand
+
+concurrency:
+  group: mlops-retrain
+  cancel-in-progress: false
+
+permissions:
+  contents: write # the auto-commit step pushes model updates
+
+jobs:
+  retrain:
+    name: retrain difficulty model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install training dependencies
+        run: pip install scikit-learn joblib numpy
+
+      - name: Train difficulty model
+        run: python services/ml-python/ml/train_difficulty_model.py
+
+      - name: Commit model updates
+        # Only creates a commit when the training artifacts actually changed.
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "mlops: weekly difficulty model retrain"
+          file_pattern: "services/ml-python/ml/**"
+          commit_user_name: subb-bot
+          commit_user_email: actions@github.com

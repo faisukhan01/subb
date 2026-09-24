@@ -1,0 +1,128 @@
+# SUBB SURFERS — CD: build & push images, then (optionally) deploy to k8s.
+#
+# Triggered by pushing a tag v* (e.g. v1.2.0). Images are published to
+# ghcr.io/<owner> as:
+#   subb-web, subb-leaderboard-go, subb-ml-python, subb-tournament-java,
+#   subb-anticheat-csharp
+#
+# The deploy job is opt-in per repository: set the variable KUBE_DEPLOY to
+# "true" (Settings → Secrets and variables → Actions → Variables) and provide
+# a KUBE_CONFIG secret. With KUBE_DEPLOY unset/false the pipeline stops after
+# publishing images — that is the default so forks never attempt deploys.
+
+name: CD
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write # needed to push to ghcr.io
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ------------------------------------------------------- build & push
+  build-push:
+    name: build & push ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: web
+            context: .
+            dockerfile: infra/docker/web.Dockerfile
+          - name: leaderboard-go
+            context: services/leaderboard-go
+            dockerfile: services/leaderboard-go/Dockerfile
+          - name: ml-python
+            context: services/ml-python
+            dockerfile: services/ml-python/Dockerfile
+          - name: tournament-java
+            context: services/tournament-java
+            dockerfile: services/tournament-java/Dockerfile
+          - name: anticheat-csharp
+            context: services/anticheat-csharp
+            dockerfile: services/anticheat-csharp/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/subb-${{ matrix.name }}
+          # v1.2.3 → tags: v1.2.3, v1.2, v1, latest
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ !contains(github.ref, '-') }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # -------------------------------------------------------------- deploy
+  # Opt-in GitOps-ish deploy: requires the repo variable KUBE_DEPLOY=true
+  # plus a KUBE_CONFIG secret (base64-encoded kubeconfig with namespace subb).
+  # Without those, this job is skipped and only images are published.
+  deploy:
+    name: deploy to production k8s
+    needs: build-push
+    if: vars.KUBE_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Apply manifests
+        run: kubectl apply -f infra/k8s/
+
+      - name: Pin images to the released version
+        run: |
+          for svc in web leaderboard-go ml-python tournament-java anticheat-csharp; do
+            kubectl -n subb set image "deployment/$svc" \
+              "$svc=${{ env.REGISTRY }}/${{ env.OWNER }}/subb-$svc:${{ steps.ver.outputs.version }}"
+          done
+
+      - name: Wait for rollout
+        run: |
+          for svc in web leaderboard-go ml-python tournament-java anticheat-csharp; do
+            kubectl -n subb rollout status "deployment/$svc" --timeout=180s
+          done

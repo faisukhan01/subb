@@ -1,0 +1,246 @@
+# SUBB SURFERS — CI.
+#
+# One workflow per ecosystem, all triggered together on push to main and on
+# pull requests. Everything runs from the repo root unless a job sets a
+# working-directory.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Superseded runs of the same branch/PR are cancelled to free runners.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ------------------------------------------------------------- web (bun)
+  web:
+    name: web (lint + typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        # `bunx tsc --noEmit` instead of `next build`: the typecheck is the
+        # cheap, hermetic gate we want on every PR. A full build also bundles
+        # and type-checks, but needs the Prisma generate step and downloads
+        # ~1GB of toolchain for info the compiler already catches — the CD
+        # workflow exercises a real production build on every tag.
+        run: bunx tsc --noEmit
+
+  # --------------------------------------------------------------- go
+  go:
+    name: go (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/leaderboard-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: services/leaderboard-go/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+  # ----------------------------------------------------------- python
+  python:
+    name: python (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r services/ml-python/app/requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: pytest services/ml-python/tests
+
+  # --------------------------------------------------- cpp (runner-core)
+  cpp:
+    name: cpp (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: native/runner-core
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run benchmark (smoke test)
+        run: ./build/runner_bench
+
+  # ----------------------------------------------------------- csharp
+  csharp:
+    name: csharp (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/anticheat-csharp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Build
+        run: dotnet build -c Release --nologo
+
+      - name: Test
+        run: dotnet test -c Release --no-build --nologo
+
+  # --------------------------------------------------------------- java
+  java:
+    name: java (maven verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify (build + tests)
+        run: mvn -B verify --file services/tournament-java/pom.xml
+
+  # ----------------------------------------------------------- flutter
+  flutter:
+    name: flutter (analyze + debug APK)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/flutter_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # The repo ships lib/ + pubspec.yaml only; this generates the android/
+      # platform folder (plus a template test to remove) exactly as the
+      # README instructs local developers to do.
+      - name: Generate platform scaffolding
+        run: flutter create . --platforms android --org com.subb
+
+      - name: Fetch dependencies
+        run: flutter pub get
+
+      - name: Remove template test (references scaffold MyApp, not our app)
+        run: rm -f test/widget_test.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: subb-surfers-flutter-debug-apk
+          path: mobile/flutter_app/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+
+  # ----------------------------------------------------------- android
+  android:
+    name: android (gradle build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/android-native
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # setup-gradle provisions Gradle itself, so the missing wrapper jar
+      # (binary, not committed) is not a problem in CI.
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build (assemble + check)
+        run: gradle build --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: subb-surfers-android-debug-apk
+          path: mobile/android-native/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+  # ------------------------------------------------------------- unity
+  # GameCI needs a paid/Personal Unity license; secrets are therefore
+  # optional and this job is allowed to fail without blocking CI.
+  unity:
+    name: unity (gameci build)
+    runs-on: ubuntu-latest
+    continue-on-error: true # no UNITY_LICENSE secret on forks yet — see README
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with GameCI
+        uses: game-ci/unity-builder@v4
+        env:
+          # Add these as repository secrets to activate the job:
+          #   UNITY_LICENSE  (Personal .ulf license file contents)
+          # or UNITY_EMAIL + UNITY_PASSWORD + UNITY_SERIAL for Pro/Plus.
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: Android
+          unityVersion: 2022.3.52f1
+          projectPath: unity/subb-surfers-unity
+
+      - name: Upload Unity build
+        uses: actions/upload-artifact@v4
+        with:
+          name: subb-surfers-unity-android
+          path: unity/subb-surfers-unity/build
+          retention-days: 14

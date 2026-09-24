@@ -1,0 +1,65 @@
+name: ✨ Feature request
+description: Suggest an idea or improvement for SUBB SURFERS.
+title: "[feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas welcome — powerups, missions, engine features, tooling, DX.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to achieve? What friction exists today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Keep it concrete.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Web game (src/)
+        - Web UI / pages
+        - Backend services (go/python/java/csharp)
+        - Mobile (Flutter / Android native)
+        - Unity project
+        - Unreal project
+        - Infra / CI
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Rough scope
+      options:
+        - Small (single file / tweak)
+        - Medium (a feature slice)
+        - Large (multi-system, needs design)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues before opening this one
+          required: true

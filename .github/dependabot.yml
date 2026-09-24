@@ -1,0 +1,82 @@
+# Dependabot — weekly dependency freshness across every ecosystem in the repo.
+version: 2
+
+updates:
+  # ------------------------------------------------------- GitHub Actions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]
+
+  # ------------------------------------------------------ npm (web root)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: [dependencies, web]
+
+  # ------------------------------------------------- pip (ml-python)
+  - package-ecosystem: pip
+    directory: /services/ml-python
+    schedule:
+      interval: weekly
+    labels: [dependencies, python]
+
+  # ------------------------------------------------- maven (tournament-java)
+  - package-ecosystem: maven
+    directory: /services/tournament-java
+    schedule:
+      interval: weekly
+    labels: [dependencies, java]
+
+  # ------------------------------------------------- nuget (anticheat-csharp)
+  - package-ecosystem: nuget
+    directory: /services/anticheat-csharp
+    schedule:
+      interval: weekly
+    labels: [dependencies, csharp]
+
+  # ------------------------------------------------- gradle (android-native)
+  - package-ecosystem: gradle
+    directory: /mobile/android-native
+    schedule:
+      interval: weekly
+    labels: [dependencies, android]
+
+  # ------------------------------------------------- docker (all images)
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /infra/docker
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /services/leaderboard-go
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /services/ml-python
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /services/tournament-java
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /services/anticheat-csharp
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
