@@ -11,7 +11,7 @@ RUN dotnet test -c Release --no-restore --logger "console;verbosity=minimal" \
  && dotnet publish -c Release --no-restore -o /app
 
 # Stage 2: ASP.NET runtime, non-root.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app .
 # curl is only here so the HEALTHCHECK can poke /healthz.
