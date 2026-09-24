@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple launcher foreground glyph: three lanes with a coin. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- lanes -->
+    <path
+        android:fillColor="#3E2723"
+        android:pathData="M30,24 L38,24 L38,84 L30,84 Z" />
+    <path
+        android:fillColor="#3E2723"
+        android:pathData="M50,24 L58,24 L58,84 L50,84 Z" />
+    <path
+        android:fillColor="#3E2723"
+        android:pathData="M70,24 L78,24 L78,84 L70,84 Z" />
+
+    <!-- runner coin -->
+    <path
+        android:fillColor="#FFF8E1"
+        android:pathData="M54,40 A12,12 0 1,0 54,64 A12,12 0 1,0 54,40 Z" />
+    <path
+        android:fillColor="#FFB300"
+        android:pathData="M54,44 A8,8 0 1,0 54,60 A8,8 0 1,0 54,44 Z" />
+</vector>

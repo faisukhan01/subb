@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SUBB SURFERS</string>
+    <string name="tab_play">Play</string>
+    <string name="tab_leaderboard">Leaderboard</string>
+    <string name="tab_profile">Profile</string>
+    <string name="leaderboard_title">Global Leaderboard</string>
+    <string name="profile_name_hint">Player name</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_submit_best">Submit best score to leaderboard</string>
+    <string name="stat_best_score">Best score</string>
+    <string name="stat_total_runs">Total runs</string>
+    <string name="stat_last_coins">Last coins</string>
+    <string name="stat_last_distance">Last distance</string>
+</resources>

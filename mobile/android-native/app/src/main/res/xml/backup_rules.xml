@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    backup_rules.xml — used by android:fullBackupContent (Android <= 11).
+    Player profile prefs are tiny and contain nothing sensitive, so we keep the
+    default full backup and only exclude nothing explicitly.
+-->
+<full-backup-content>
+    <exclude domain="webview" path="." />
+</full-backup-content>
