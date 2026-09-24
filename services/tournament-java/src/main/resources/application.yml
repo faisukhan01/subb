@@ -1,0 +1,19 @@
+server:
+  port: 4003
+
+spring:
+  application:
+    name: subb-tournament
+  jackson:
+    # ISO-8601 instants ("2025-01-01T00:00:00Z"), snake_case comes from
+    # @JsonNaming on the DTOs.
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    default-property-inclusion: non_null
+    time-zone: UTC
+
+logging:
+  level:
+    root: INFO
+    com.subb.tournament: INFO

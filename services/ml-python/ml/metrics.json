@@ -1,0 +1,16 @@
+{
+  "model_version": "v1.0.0",
+  "r2": 0.9125,
+  "mae": 0.0527,
+  "feature_importances": {
+    "avg_speed": 0.0386,
+    "coins_per_run": 0.2125,
+    "crash_rate": 0.6086,
+    "session_length_min": 0.1365,
+    "runs_last_7d": 0.0038
+  },
+  "n_samples": 6000,
+  "n_features": 5,
+  "trained_at": "2026-09-24T18:35:04.756017+00:00",
+  "sklearn_version": "1.5.2"
+}
