@@ -133,11 +133,18 @@ export function buildingTexture(): THREE.CanvasTexture {
   const [canvas, ctx] = makeCanvas(128, 256);
   ctx.fillStyle = "#ffffff"; // tinted by material color
   ctx.fillRect(0, 0, 128, 256);
+  // Horizontal ledge shadows for facade depth
   for (let row = 0; row < 12; row++) {
+    ctx.fillStyle = "rgba(0,0,0,0.1)";
+    ctx.fillRect(0, 8 + row * 20, 128, 3);
     for (let col = 0; col < 5; col++) {
-      const lit = Math.random() < 0.28;
+      const lit = Math.random() < 0.26;
       ctx.fillStyle = lit ? "#ffdf9e" : "rgba(40,45,55,0.85)";
       ctx.fillRect(10 + col * 24, 12 + row * 20, 14, 12);
+      if (lit) {
+        ctx.fillStyle = "rgba(255,240,200,0.45)";
+        ctx.fillRect(10 + col * 24, 12 + row * 20, 14, 3);
+      }
     }
   }
   return finish(key, canvas);
@@ -272,6 +279,90 @@ export function puffSprite(): THREE.CanvasTexture {
   grad.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Fluffy cumulus cloud built from soft blobs — used on a billboard. */
+export function cloudSpriteTexture(): THREE.CanvasTexture {
+  const key = "cloudSprite";
+  if (cache.has(key)) return cache.get(key) as THREE.CanvasTexture;
+  const [canvas, ctx] = makeCanvas(256, 128);
+  const blob = (x: number, y: number, r: number, a: number): void => {
+    const g = ctx.createRadialGradient(x, y, r * 0.15, x, y, r);
+    g.addColorStop(0, `rgba(255,255,255,${a})`);
+    g.addColorStop(0.7, `rgba(255,255,255,${a * 0.55})`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  };
+  // Base bank + puffs; warm underside tint from the sunset
+  blob(128, 84, 62, 0.95);
+  blob(74, 90, 44, 0.9);
+  blob(186, 88, 48, 0.9);
+  blob(108, 62, 38, 0.95);
+  blob(156, 64, 34, 0.9);
+  const warm = ctx.createLinearGradient(0, 40, 0, 120);
+  warm.addColorStop(0, "rgba(255,236,210,0)");
+  warm.addColorStop(1, "rgba(255,196,150,0.4)");
+  ctx.globalCompositeOperation = "source-atop";
+  ctx.fillStyle = warm;
+  ctx.fillRect(0, 0, 256, 128);
+  ctx.globalCompositeOperation = "source-over";
+  return finish(key, canvas);
+}
+
+/** Radial sun glow for the golden-hour sky. */
+export function sunGlowTexture(): THREE.CanvasTexture {
+  const key = "sunGlow";
+  if (cache.has(key)) return cache.get(key) as THREE.CanvasTexture;
+  const [canvas, ctx] = makeCanvas(256, 256);
+  const g = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
+  g.addColorStop(0, "rgba(255,244,214,1)");
+  g.addColorStop(0.18, "rgba(255,214,140,0.9)");
+  g.addColorStop(0.45, "rgba(255,166,88,0.42)");
+  g.addColorStop(1, "rgba(255,140,60,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 256, 256);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Distant city silhouette band with lit windows, drawn twice per side. */
+export function skylineTexture(tint: string): THREE.CanvasTexture {
+  const key = `skyline-${tint}`;
+  if (cache.has(key)) return cache.get(key) as THREE.CanvasTexture;
+  const [canvas, ctx] = makeCanvas(1024, 256);
+  ctx.clearRect(0, 0, 1024, 256);
+  let x = 0;
+  let seed = 7;
+  const rand = (): number => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  while (x < 1024) {
+    const w = 40 + rand() * 70;
+    const h = 70 + rand() * 150;
+    ctx.fillStyle = tint;
+    ctx.fillRect(x, 256 - h, w, h);
+    // Antenna on some towers
+    if (rand() < 0.3) {
+      ctx.fillRect(x + w / 2 - 2, 256 - h - 22, 4, 22);
+    }
+    // Sparse lit windows
+    ctx.fillStyle = "rgba(255,214,150,0.5)";
+    for (let wy = 256 - h + 10; wy < 246; wy += 14) {
+      for (let wx = x + 6; wx < x + w - 8; wx += 12) {
+        if (rand() < 0.12) ctx.fillRect(wx, wy, 5, 7);
+      }
+    }
+    ctx.fillStyle = tint;
+    x += w + 4 + rand() * 14;
+  }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   cache.set(key, tex);

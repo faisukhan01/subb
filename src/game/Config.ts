@@ -83,10 +83,10 @@ export const FOV_SPEED_BOOST = 9;
 
 /** Scene palette — warm golden-hour subway. */
 export const COLORS = {
-  skyTop: 0x86c1e8,
-  skyHorizon: 0xffe0bd,
-  fogNear: 45,
-  fogFar: 150,
+  skyTop: 0x79b7e6,
+  skyHorizon: 0xffd9ae,
+  fogNear: 55,
+  fogFar: 185,
   gravel: 0xc4ad8d,
   gravelDark: 0xb09a7c,
   rail: 0x8b8f96,
@@ -94,6 +94,7 @@ export const COLORS = {
   wall: 0xd9cbb8,
   wallTop: 0xc7b49e,
   lampPost: 0x54595f,
+  cityGround: 0x97897a,
   buildings: [0xf2b880, 0xe8a09a, 0xa8c698, 0xd9b38c, 0xc9a7b8, 0xead9a8],
   trains: [0xd9480f, 0xe8b30e, 0x2f9e44, 0x8d99ae, 0xb4654a, 0xd6c05a],
   coin: 0xffc93c,
@@ -105,7 +106,7 @@ export const COLORS = {
   jetpackFlame: 0xffa94d,
 } as const;
 
-/** Character palette (procedural low-poly rigs). */
+/** Character palette (procedural stylized rigs). */
 export interface CharacterPalette {
   id: "max" | "zoe" | "rex";
   displayName: string;
@@ -120,8 +121,13 @@ export interface CharacterPalette {
   sleeves?: number;
   pants: number;
   shoes: number;
+  soleColor?: number; // sneaker midsole accent
   backpack?: number;
   accent?: number; // headphone band / chain / streak
+  style?: "hoodie" | "bomber" | "tank" | "uniform";
+  sunglasses?: boolean;
+  beard?: boolean;
+  wristbands?: boolean;
 }
 
 export const CHARACTERS: CharacterPalette[] = [
@@ -135,11 +141,13 @@ export const CHARACTERS: CharacterPalette[] = [
     hair: 0x3b2a1e,
     cap: 0xe03131,
     capBrimBack: true,
-    torso: 0xf8f5f0,
+    torso: 0xe03131,
     sleeves: 0xe03131,
     pants: 0x4a4e69,
-    shoes: 0xf1f3f5,
+    shoes: 0xf8f5f0,
+    soleColor: 0xe03131,
     backpack: 0xf76707,
+    style: "hoodie",
   },
   {
     id: "zoe",
@@ -148,12 +156,14 @@ export const CHARACTERS: CharacterPalette[] = [
     unlockCost: 500,
     perk: "+10% magnet duration",
     skin: 0xf7d3b3,
-    hair: 0x1c1917,
+    hair: 0x2d2723,
     torso: 0x12b886,
     sleeves: 0x0ca678,
     pants: 0x343a40,
-    shoes: 0xf1f3f5,
+    shoes: 0xf8f5f0,
+    soleColor: 0xffd43b,
     accent: 0xffd43b,
+    style: "bomber",
   },
   {
     id: "rex",
@@ -163,13 +173,17 @@ export const CHARACTERS: CharacterPalette[] = [
     perk: "+8% jump power",
     skin: 0xb98663,
     hair: 0x111111,
-    cap: 0x212529,
+    cap: 0x3a3f46,
     capBrimBack: true,
     torso: 0xe8590c,
-    sleeves: 0xf8f5f0,
+    sleeves: 0xe8590c,
     pants: 0x495057,
     shoes: 0xf8f5f0,
+    soleColor: 0xe8590c,
     accent: 0xffd43b,
+    style: "tank",
+    beard: true,
+    wristbands: true,
   },
 ];
 

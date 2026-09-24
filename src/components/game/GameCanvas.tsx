@@ -26,6 +26,9 @@ export default function GameCanvas() {
     const store = useGameStore.getState;
     const abort = new AbortController();
 
+    // Apply persisted profile bits post-mount (SSR-safe hydration).
+    store().hydrateProfile();
+
     const refreshLeaderboard = async () => {
       try {
         const res = await fetch("/api/leaderboard?limit=20", { signal: abort.signal });

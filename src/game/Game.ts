@@ -53,7 +53,7 @@ const MISSION_TEMPLATES: Array<{ kind: MissionState["kind"]; base: number; step:
 export class Game {
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
-  private clock = new THREE.Clock();
+  private lastFrameTime = 0;
   private world: World;
   private player: Player;
   private guard = new GuardManager();
@@ -97,9 +97,9 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.06;
+    this.renderer.toneMappingExposure = 1.12;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.display = "block";
     this.renderer.domElement.style.touchAction = "none";
@@ -114,6 +114,7 @@ export class Game {
     this.world = new World({ onHorn: () => this.audio.jump() });
     this.world.scene.add(this.guard.group);
     this.player = new Player(this.palette);
+    this.player.setMenuFacing(true);
     this.world.scene.add(this.player.root);
 
     // Pre-generate menu backdrop scenery
@@ -139,6 +140,7 @@ export class Game {
   start(character: CharacterId): void {
     this.audio.unlock();
     this.palette = CHARACTERS.find((c) => c.id === character) ?? CHARACTERS[0];
+    this.player.setMenuFacing(false);
     this.player.reset(this.palette);
     this.world.reseed(0);
     this.speed = SPEED_START;
@@ -181,6 +183,7 @@ export class Game {
     this.phase = "menu";
     this.input.setEnabled(false);
     this.guard.setHidden();
+    this.player.setMenuFacing(true);
     this.menuTime = 0;
   }
 
@@ -192,6 +195,7 @@ export class Game {
   previewCharacter(character: CharacterId): void {
     this.palette = CHARACTERS.find((c) => c.id === character) ?? CHARACTERS[0];
     this.player.reset(this.palette);
+    this.player.setMenuFacing(true);
     this.player.pos.set(0, 0, 0);
   }
 
@@ -242,7 +246,9 @@ export class Game {
   // --------------------------------------------------------------- loop
 
   private tick(): void {
-    const dt = Math.min(this.clock.getDelta(), 0.05);
+    const now = performance.now();
+    const dt = this.lastFrameTime > 0 ? Math.min((now - this.lastFrameTime) / 1000, 0.05) : 0.016;
+    this.lastFrameTime = now;
 
     if (this.phase === "running") this.simulate(dt);
     else if (this.phase === "dying") this.simulateDying(dt);
@@ -529,14 +535,19 @@ export class Game {
   }
 
   private orbitMenuCamera(): void {
-    const a = this.menuTime * 0.22;
-    const r = 5.4;
+    // Slow cinematic orbit — low hero angle, gentle float.
+    // On wide screens the runner is framed fully clear of the roster cards
+    // (right of center); centered on portrait.
+    const a = Math.sin(this.menuTime * 0.14) * 0.55 + 0.35;
+    const r = 5.1;
+    const wide = this.camera.aspect > 1.05;
+    const pan = wide ? -2.35 : 0;
     this.camera.position.set(
       Math.sin(a) * r,
-      2.35 + Math.sin(this.menuTime * 0.4) * 0.25,
+      1.8 + Math.sin(this.menuTime * 0.4) * 0.15,
       Math.cos(a) * r,
     );
-    this.camera.lookAt(0, 1.35, 0);
+    this.camera.lookAt(pan, wide ? 1.0 : 1.15, 0);
     if (Math.abs(this.camera.fov - FOV_BASE) > 0.05) {
       this.camera.fov = damp(this.camera.fov, FOV_BASE, 4, 0.016);
       this.camera.updateProjectionMatrix();
@@ -544,8 +555,9 @@ export class Game {
   }
 
   private placeMenuCamera(_t: number): void {
-    this.camera.position.set(4.4, 2.4, 4.4);
-    this.camera.lookAt(0, 1.35, 0);
+    const wide = this.camera.aspect > 1.05;
+    this.camera.position.set(Math.sin(0.35) * 5.1, 1.8, Math.cos(0.35) * 5.1);
+    this.camera.lookAt(wide ? -2.35 : 0, wide ? 1.0 : 1.15, 0);
   }
 
   // ------------------------------------------------------------- resize

@@ -24,7 +24,10 @@ const GUARD_PALETTE: CharacterPalette = {
   sleeves: 0x34383f,
   pants: 0x2b2d33,
   shoes: 0x1c1d21,
+  soleColor: 0x14161a,
   accent: 0xffd43b, // badge glint
+  style: "uniform",
+  sunglasses: true,
 };
 
 export type GuardPhase = "intro" | "follow" | "catch" | "hidden";
@@ -50,10 +53,10 @@ export class GuardManager {
     // Gold badge on the cap
     const badge = new THREE.Mesh(
       new THREE.CylinderGeometry(0.05, 0.05, 0.02, 10),
-      new THREE.MeshLambertMaterial({ color: 0xffd43b, emissive: 0x8a6d00 }),
+      new THREE.MeshStandardMaterial({ color: 0xffd43b, metalness: 0.8, roughness: 0.25, emissive: 0x8a6d00, emissiveIntensity: 0.35 }),
     );
     badge.rotation.x = Math.PI / 2;
-    badge.position.set(0, 0.27, 0.205);
+    badge.position.set(0, 0.28, 0.218);
     this.guardRig.head.add(badge);
 
     this.group.add(this.guardRig.root);

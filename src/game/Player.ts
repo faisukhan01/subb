@@ -37,6 +37,7 @@ export class Player {
 
   private rig = buildCharacter(this.palette);
   private animator = new CharacterAnimator(this.rig);
+  private menuFacing = false;
   private board: THREE.Group | null = null;
   private jetpack: THREE.Group | null = null;
   private flame: THREE.Mesh | null = null;
@@ -65,6 +66,12 @@ export class Player {
     return this.rolling > 0 ? ROLL_HEIGHT : PLAYER_HEIGHT;
   }
 
+  /** Face the menu camera (+z) in menus; face forward (−z) while running. */
+  setMenuFacing(v: boolean): void {
+    this.menuFacing = v;
+    this.root.rotation.y = v ? Math.PI : 0;
+  }
+
   reset(palette?: CharacterPalette): void {
     if (palette && palette.id !== this.palette.id) {
       this.palette = palette;
@@ -82,6 +89,7 @@ export class Player {
     this.flying = false;
     this.queuedRoll = false;
     this.lean = 0;
+    this.root.rotation.y = this.menuFacing ? Math.PI : 0;
     this.root.position.copy(this.pos);
     this.detachBoard();
     this.detachJetpack();

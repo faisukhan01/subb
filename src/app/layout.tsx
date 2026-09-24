@@ -1,16 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Titan_One } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/** UI font — geometric, friendly, reads well at small sizes. */
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/** Display font — chunky arcade numerals/headers (logo, score, titles). */
+const titanOne = Titan_One({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: "400",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -48,10 +54,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground overscroll-none`}
-      >
+    // Font variables live on <html> so :root-level theme mappings
+    // (--default-font-family, .font-display) resolve everywhere.
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${titanOne.variable}`}>
+      <body className="antialiased bg-background text-foreground overscroll-none">
         {children}
         <Toaster />
       </body>

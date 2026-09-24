@@ -11,7 +11,15 @@ import {
   TRAIN_HEIGHT,
 } from "../Config";
 import { pick, randRange, weightedIndex } from "../utils";
-import { billboardTexture, buildingTexture, puffSprite, skyGradientTexture } from "../textures";
+import {
+  billboardTexture,
+  buildingTexture,
+  cloudSpriteTexture,
+  puffSprite,
+  skyGradientTexture,
+  skylineTexture,
+  sunGlowTexture,
+} from "../textures";
 import { CoinManager, SparkleManager } from "../entities/Coins";
 import { ObstacleManager, type ObstacleKind } from "../entities/Obstacles";
 import { TrainManager } from "../entities/Trains";
@@ -49,7 +57,11 @@ export class World {
 
   private chunks: Chunk[] = [];
   private nextChunkFrontZ = 0;
-  private clouds: THREE.Mesh[] = [];
+  private clouds: THREE.Sprite[] = [];
+  private sunSprite: THREE.Sprite;
+  private skylineL: THREE.Mesh;
+  private skylineR: THREE.Mesh;
+  private skylineFar: THREE.Mesh;
   private movingTrainTimer = 8;
   private sun: THREE.DirectionalLight;
   private hemi: THREE.HemisphereLight;
@@ -73,9 +85,9 @@ export class World {
     this.sky = new THREE.Mesh(skyGeo, skyMat);
     this.scene.add(this.sky);
 
-    this.hemi = new THREE.HemisphereLight(0xcfe8ff, 0xd9c2a3, 0.85);
+    this.hemi = new THREE.HemisphereLight(0xcfe4ff, 0xd9b899, 0.72);
     this.scene.add(this.hemi);
-    this.sun = new THREE.DirectionalLight(0xfff1dd, 1.5);
+    this.sun = new THREE.DirectionalLight(0xffe3c0, 1.75);
     this.sun.position.set(12, 22, 10);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -88,6 +100,41 @@ export class World {
     this.sun.shadow.bias = -0.0004;
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
+
+    // Golden-hour sun disc + glow, fixed ahead-left of the runner
+    this.sunSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: sunGlowTexture(),
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+      }),
+    );
+    this.sunSprite.scale.set(88, 88, 1);
+    this.scene.add(this.sunSprite);
+
+    // Distant city silhouettes framing the corridor
+    const mkSkyline = (tint: string, opacity: number): THREE.Mesh => {
+      const material = new THREE.MeshBasicMaterial({
+        map: skylineTexture(tint),
+        transparent: true,
+        depthWrite: false,
+        fog: false,
+        opacity,
+      });
+      return new THREE.Mesh(new THREE.PlaneGeometry(420, 64), material);
+    };
+    this.skylineL = mkSkyline("#9a7358", 0.9);
+    this.skylineL.rotation.y = Math.PI / 2;
+    this.skylineL.position.set(-120, 22, -60);
+    this.scene.add(this.skylineL);
+    this.skylineR = mkSkyline("#8d6a57", 0.9);
+    this.skylineR.rotation.y = -Math.PI / 2;
+    this.skylineR.position.set(120, 22, -60);
+    this.scene.add(this.skylineR);
+    this.skylineFar = mkSkyline("#a5806a", 0.7);
+    this.skylineFar.position.set(0, 26, -230);
+    this.scene.add(this.skylineFar);
 
     this.scene.add(this.coins.group);
     this.scene.add(this.obstacles.group);
@@ -123,19 +170,21 @@ export class World {
   // ------------------------------------------------------------- clouds
 
   private spawnClouds(): void {
-    const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 });
-    for (let i = 0; i < 7; i++) {
-      const cloud = new THREE.Group();
-      const puffs = 3 + Math.floor(Math.random() * 3);
-      for (let j = 0; j < puffs; j++) {
-        const s = new THREE.Mesh(new THREE.SphereGeometry(randRange(2.2, 4.2), 10, 8), cloudMat);
-        s.position.set(j * 2.4 - puffs * 1.1, randRange(-0.5, 0.8), randRange(-1, 1));
-        s.scale.y = 0.55;
-        cloud.add(s);
-      }
-      cloud.position.set(randRange(-60, 60), randRange(22, 40), randRange(-200, -20));
+    const cloudTex = cloudSpriteTexture();
+    for (let i = 0; i < 9; i++) {
+      const cloud = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: cloudTex,
+          transparent: true,
+          opacity: 0.88,
+          depthWrite: false,
+        }),
+      );
+      const s = randRange(12, 22);
+      cloud.scale.set(s, s * 0.5, 1);
+      cloud.position.set(randRange(-80, 80), randRange(20, 42), randRange(-220, 10));
       this.scene.add(cloud);
-      this.clouds.push(cloud as unknown as THREE.Mesh);
+      this.clouds.push(cloud);
     }
   }
 
@@ -145,6 +194,14 @@ export class World {
     const group = new THREE.Group();
     const disposables: THREE.BufferGeometry[] = [];
     const base = frontZ - CHUNK_LENGTH / 2; // center z of chunk
+
+    // City ground (asphalt apron under the whole corridor)
+    const apronGeo = new THREE.BoxGeometry(26, 0.18, CHUNK_LENGTH);
+    disposables.push(apronGeo);
+    const apron = new THREE.Mesh(apronGeo, this.mat(COLORS.cityGround));
+    apron.position.set(0, -0.16, base);
+    apron.receiveShadow = true;
+    group.add(apron);
 
     // Ground (gravel bed)
     const groundGeo = new THREE.BoxGeometry(12.4, 0.24, CHUNK_LENGTH);
@@ -241,23 +298,64 @@ export class World {
       group.add(head);
     }
 
-    // Occasional graffiti billboard gantry
-    if (Math.random() < 0.34) {
-      const words = ["SUBB", "RUN!", "GO GO", "ZAP", "WILD"];
-      const word = pick(words);
-      const tex = billboardTexture(word, ["#b4400f", "#0f7b4f", "#8a2f8f"][Math.floor(Math.random() * 3)], "#1f1f24");
-      const boardGeo = new THREE.BoxGeometry(7.2, 2.1, 0.18);
-      disposables.push(boardGeo);
-      const board = new THREE.Mesh(boardGeo, new THREE.MeshLambertMaterial({ map: tex }));
-      board.position.set(0, 4.6, frontZ - randRange(5, CHUNK_LENGTH - 5));
-      group.add(board);
-      for (const sx of [-3.4, 3.4]) {
-        const postGeo = new THREE.BoxGeometry(0.24, 4.6, 0.24);
+    // Overhead signal gantry (adds corridor depth)
+    if (Math.random() < 0.4) {
+      const gantryZ = frontZ - randRange(4, CHUNK_LENGTH - 4);
+      for (const sx of [-6.1, 6.1]) {
+        const postGeo = new THREE.BoxGeometry(0.22, 5.2, 0.22);
         disposables.push(postGeo);
         const post = new THREE.Mesh(postGeo, this.mat(COLORS.lampPost));
-        post.position.set(sx, 2.3, board.position.z);
+        post.position.set(sx, 2.6, gantryZ);
         group.add(post);
       }
+      const beamGeo = new THREE.BoxGeometry(12.6, 0.24, 0.3);
+      disposables.push(beamGeo);
+      const beam = new THREE.Mesh(beamGeo, this.mat(COLORS.lampPost));
+      beam.position.set(0, 5.15, gantryZ);
+      group.add(beam);
+      // Signal heads over each lane
+      for (const lx of LANE_X) {
+        const headGeo = new THREE.BoxGeometry(0.16, 0.42, 0.14);
+        disposables.push(headGeo);
+        const sig = new THREE.Mesh(headGeo, this.mat(0x2b2e33));
+        sig.position.set(lx, 4.7, gantryZ);
+        group.add(sig);
+        const lampGeo = new THREE.SphereGeometry(0.055, 8, 8);
+        disposables.push(lampGeo);
+        const lamp = new THREE.Mesh(
+          lampGeo,
+          new THREE.MeshLambertMaterial({
+            color: 0x74e39a,
+            emissive: 0x2b9d5c,
+            emissiveIntensity: 1.4,
+          }),
+        );
+        lamp.position.set(lx, 4.78, gantryZ + 0.09);
+        group.add(lamp);
+      }
+    }
+
+    // Graffiti ad boards mounted on the walls (never over the track —
+    // the camera path stays clear, like real subway ad panels)
+    if (Math.random() < 0.4) {
+      const words = ["SUBB", "RUN!", "GO GO", "ZAP", "WILD"];
+      const word = pick(words);
+      const tex = billboardTexture(word, ["#b4400f", "#146356", "#9c4a1d"][Math.floor(Math.random() * 3)], "#1f1f24");
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const boardGeo = new THREE.BoxGeometry(5.4, 1.55, 0.14);
+      disposables.push(boardGeo);
+      const board = new THREE.Mesh(boardGeo, new THREE.MeshLambertMaterial({ map: tex }));
+      board.position.set(side * 5.32, 2.35, frontZ - randRange(5, CHUNK_LENGTH - 5));
+      board.rotation.y = -side * Math.PI / 2; // face the track
+      group.add(board);
+      // Thin frame
+      const frameGeo = new THREE.BoxGeometry(5.7, 1.85, 0.1);
+      disposables.push(frameGeo);
+      const frame = new THREE.Mesh(frameGeo, this.mat(0x3d3a36));
+      frame.position.copy(board.position);
+      frame.rotation.y = board.rotation.y;
+      frame.translateZ(-0.05);
+      group.add(frame);
     }
 
     this.scene.add(group);
@@ -320,9 +418,9 @@ export class World {
     return weightedIndex(weights);
   }
 
-  private populateChunk(frontZ: number, difficulty: number, safe = false): void {
+  private populateChunk(frontZ: number, difficulty: number, safe = false, plannedTemplate?: number): void {
     const zStart = frontZ - 3; // coins/obstacles start a bit inside
-    const template = safe ? 0 : this.pickTemplate(difficulty);
+    const template = plannedTemplate ?? (safe ? 0 : this.pickTemplate(difficulty));
 
     switch (template) {
       case 0: {
@@ -418,13 +516,14 @@ export class World {
   update(dt: number, playerZ: number, playerX: number, difficulty: number, running: boolean): void {
     // Stream scenery
     while (this.nextChunkFrontZ > playerZ - CHUNK_LENGTH * CHUNKS_AHEAD) {
+      // Safe runway: the first ~60 m of a fresh run never spawns obstacles
+      // or trains, so every run starts with a fair, dodgeable world.
+      const safe = running && this.nextChunkFrontZ > playerZ - 62;
+      const template = running ? (safe ? 0 : this.pickTemplate(difficulty)) : -1;
       const chunk = this.buildChunk(this.nextChunkFrontZ);
       this.chunks.push(chunk);
       if (running) {
-        // Safe runway: the first ~60 m of a fresh run never spawns obstacles
-        // or trains, so every run starts with a fair, dodgeable world.
-        const safe = this.nextChunkFrontZ > playerZ - 62;
-        this.populateChunk(this.nextChunkFrontZ, difficulty, safe);
+        this.populateChunk(this.nextChunkFrontZ, difficulty, safe, template);
       }
       this.nextChunkFrontZ -= CHUNK_LENGTH;
     }
@@ -447,12 +546,20 @@ export class World {
     this.trains.cull(playerZ, DESPAWN_BEHIND);
     this.powerUps.cull(playerZ, DESPAWN_BEHIND);
 
-    // Clouds drift lazily; sky dome follows the camera
+    // Clouds drift lazily; sky dome, sun and skylines follow the runner
     for (const c of this.clouds) {
       c.position.z += dt * 0.7;
-      if (c.position.z > playerZ + 40) c.position.z = playerZ - 210;
+      if (c.position.z > playerZ + 40) {
+        c.position.z = playerZ - 220;
+        c.position.x = randRange(-80, 80);
+        c.position.y = randRange(20, 42);
+      }
     }
     this.sky.position.set(playerX * 0.2, 0, playerZ);
+    this.sunSprite.position.set(playerX * 0.2 - 52, 38, playerZ - 125);
+    this.skylineL.position.z = playerZ - 70;
+    this.skylineR.position.z = playerZ - 70;
+    this.skylineFar.position.z = playerZ - 235;
   }
 
   /** Camera-space sun + shadow frustum tracking. */

@@ -37,6 +37,8 @@ interface GameStore {
   unlocked: CharacterId[];
   wallet: number;
   muted: boolean;
+  /** True once localStorage-persisted profile bits have been applied (client only). */
+  hydrated: boolean;
 
   leaderboard: LeaderEntry[];
   profile: ProfileResponse | null;
@@ -52,6 +54,7 @@ interface GameStore {
   pushToast: (text: string, sub?: string) => void;
   dropToast: (id: number) => void;
 
+  hydrateProfile: () => void;
   setPlayerName: (n: string) => void;
   selectCharacter: (c: CharacterId) => void;
   unlockCharacter: (c: CharacterId, cost: number) => boolean;
@@ -91,7 +94,6 @@ export function savePersisted(p: PersistedProfile): void {
   }
 }
 
-const persisted = loadPersisted();
 let toastSeq = 1;
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -103,11 +105,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastRun: null,
   toasts: [],
 
-  playerName: persisted.playerName ?? "",
-  selectedCharacter: persisted.selectedCharacter ?? "max",
-  unlocked: persisted.unlocked ?? ["max"],
-  wallet: persisted.wallet ?? 0,
-  muted: persisted.muted ?? false,
+  // Defaults match the server render exactly; persisted values are applied
+  // post-mount via hydrateProfile() to avoid SSR hydration mismatches.
+  playerName: "",
+  selectedCharacter: "max",
+  unlocked: ["max"],
+  wallet: 0,
+  muted: false,
+  hydrated: false,
 
   leaderboard: [],
   profile: null,
@@ -126,6 +131,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     window.setTimeout(() => get().dropToast(id), 2600);
   },
   dropToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  hydrateProfile: () => {
+    if (get().hydrated) return;
+    const p = loadPersisted();
+    set({
+      playerName: p.playerName ?? "",
+      selectedCharacter: p.selectedCharacter ?? "max",
+      unlocked: p.unlocked ?? ["max"],
+      wallet: p.wallet ?? 0,
+      muted: p.muted ?? false,
+      hydrated: true,
+    });
+  },
 
   setPlayerName: (playerName) => {
     set({ playerName });
