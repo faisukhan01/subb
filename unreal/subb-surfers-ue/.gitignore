@@ -1,0 +1,30 @@
+# Unreal Engine generated junk
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+Packaged/
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+Plugins/**/Saved/
+
+# IDE / compiler artifacts
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.code-workspace
+.vs/
+.vscode/
+.idea/
+*.user
+
+# Platform-specific
+*.uasset.bak
+*.umap.bak
+
+# macOS
+.DS_Store

@@ -1,0 +1,20 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.4",
+  "Category": "",
+  "Description": "SUBB SURFERS - original 3-lane endless subway runner (UE 5.4 C++ source).",
+  "Modules": [
+    {
+      "Name": "SubbSurfers",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "CoreUObject",
+        "InputCore",
+        "EnhancedInput",
+        "UMG"
+      ]
+    }
+  ]
+}
