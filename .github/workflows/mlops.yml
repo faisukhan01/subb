@@ -38,7 +38,7 @@ jobs:
 
       - name: Commit model updates
         # Only creates a commit when the training artifacts actually changed.
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "mlops: weekly difficulty model retrain"
           file_pattern: "services/ml-python/ml/**"
