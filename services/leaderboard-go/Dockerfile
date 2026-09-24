@@ -5,7 +5,7 @@
 # `go mod tidy` so the image build is self-contained and reproducible from the
 # pinned versions in go.mod.
 
-FROM golang:1.23-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /src
 RUN apk add --no-cache git ca-certificates
 COPY go.mod ./
