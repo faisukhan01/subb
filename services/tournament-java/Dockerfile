@@ -10,7 +10,7 @@ COPY src ./src
 RUN mvn -B clean package
 
 # Stage 2: minimal JRE runtime, non-root.
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S subb && adduser -S subb -G subb
 WORKDIR /app
 COPY --from=build /build/target/subb-tournament.jar app.jar
