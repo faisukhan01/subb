@@ -17,7 +17,7 @@ RUN go mod tidy \
  && go build -trimpath -ldflags="-s -w" -o /out/leaderboard .
 
 # Stage 2 ships a minimal non-root runtime image.
-FROM alpine:3.20
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates \
  && addgroup -S subb \
  && adduser -S -G subb subb
