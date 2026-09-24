@@ -1,0 +1,41 @@
+// SUBB SURFERS — leaderboard & player run history.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id            String     @id @default(cuid())
+  name          String     @unique
+  bestScore     Int        @default(0)
+  bestCoins     Int        @default(0)
+  bestDistance  Int        @default(0)
+  totalCoins    Int        @default(0)
+  totalRuns     Int        @default(0)
+  totalDistance Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  runs          ScoreRun[]
+
+  @@index([bestScore])
+}
+
+model ScoreRun {
+  id        String   @id @default(cuid())
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  score     Int
+  coins     Int
+  distance  Int
+  missions  Int      @default(0)
+  character String   @default("max")
+  createdAt DateTime @default(now())
+
+  @@index([score])
+  @@index([playerId])
+}
