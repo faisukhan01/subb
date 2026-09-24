@@ -224,7 +224,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build with GameCI
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v6
         env:
           # Add these as repository secrets to activate the job:
           #   UNITY_LICENSE  (Personal .ulf license file contents)
