@@ -1,2 +1,64 @@
-skills/
+# Dependencies & builds
 node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+.next-types/
+
+# Runtime artifacts
+*.db
+*.db-journal
+dev.log
+server.log
+*.log
+
+# Sandbox / agent internals (not part of the product)
+worklog.md
+agent-ctx/
+skills/
+examples/
+download/
+tests/
+Caddyfile
+.zscripts/
+mini-services/
+.agent-browser/
+
+# Environment
+.env
+.env*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Per-stack artifacts
+coverage/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+target/
+.gradle/
+gradle-app.settings
+local.properties
+mobile/flutter_app/.dart_tool/
+mobile/flutter_app/.packages
+mobile/flutter_app/build/
+unreal/**/Binaries/
+unreal/**/DerivedDataCache/
+unreal/**/Intermediate/
+unreal/**/Saved/
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild*/
+unity/[Ll]ogs/
+unity/[Uu]serSettings/
+*.csproj
+*.sln
