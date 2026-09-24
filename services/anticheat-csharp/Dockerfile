@@ -2,7 +2,7 @@
 # anticheat-csharp — SUBB SURFERS anti-cheat service (.NET 8 minimal API)
 
 # Stage 1: restore, test, publish.
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY Anticheat.csproj ./
 RUN dotnet restore
