@@ -76,11 +76,13 @@ export class CoinManager {
       c.spin += dt * 4.2;
 
       if (c.collected > 0) {
-        // Pop-up collect animation then release.
+        // Shrink-and-lift collect animation then release. (Coins pulled in
+        // by the magnet converge on the same spot, so growing them here
+        // would merge into one giant blob in front of the camera.)
         c.collected += dt;
         const t = c.collected / 0.22;
-        c.mesh.scale.setScalar(1 + t * 0.9);
-        c.mesh.position.y = c.y + t * 1.1;
+        c.mesh.scale.setScalar(Math.max(0.08, 1 - t));
+        c.mesh.position.y = c.y + t * 0.45;
         if (t >= 1) this.release(i);
         continue;
       }
