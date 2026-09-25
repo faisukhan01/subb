@@ -99,7 +99,7 @@ export class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.32;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.display = "block";
     this.renderer.domElement.style.touchAction = "none";
@@ -178,12 +178,16 @@ export class Game {
     this.audio.startMusic();
   }
 
-  /** Game-over → menu (keeps last frame pose as backdrop). */
+  /** Game-over → menu (fresh station backdrop, runner back at origin). */
   toMenu(): void {
     this.phase = "menu";
     this.input.setEnabled(false);
     this.guard.setHidden();
+    this.player.reset(this.palette);
     this.player.setMenuFacing(true);
+    this.player.pos.set(0, 0, 0);
+    this.world.reseed(0);
+    this.world.update(0.016, 0, 0, 0, false);
     this.menuTime = 0;
   }
 

@@ -18,11 +18,11 @@ const GUARD_PALETTE: CharacterPalette = {
   perk: "",
   skin: 0xe8b088,
   hair: 0x2b2b2b,
-  cap: 0x2f3138,
+  cap: 0x2b4a6f,
   capBrimBack: false,
-  torso: 0x3d4148,
-  sleeves: 0x34383f,
-  pants: 0x2b2d33,
+  torso: 0xf2a00c, // hi-vis station uniform
+  sleeves: 0xf2a00c,
+  pants: 0x2e3440,
   shoes: 0x1c1d21,
   soleColor: 0x14161a,
   accent: 0xffd43b, // badge glint

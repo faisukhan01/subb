@@ -29,7 +29,7 @@ function ensureStudio(): void {
   renderer.setSize(SIZE, SIZE);
   renderer.setPixelRatio(2);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.3;
   renderer.setClearColor(0x000000, 0);
 
   scene = new THREE.Scene();
@@ -39,7 +39,7 @@ function ensureStudio(): void {
   camera.lookAt(0, 1.02, 0);
 
   // Soft three-point studio lighting
-  const key = new THREE.DirectionalLight(0xfff2e0, 2.4);
+  const key = new THREE.DirectionalLight(0xfff2e0, 2.9);
   key.position.set(2.4, 3.6, 3.2);
   scene.add(key);
   const fill = new THREE.DirectionalLight(0xcfe0ff, 0.9);
@@ -48,7 +48,7 @@ function ensureStudio(): void {
   const rim = new THREE.DirectionalLight(0xffd8a8, 1.7);
   rim.position.set(-1.2, 2.8, -3.4);
   scene.add(rim);
-  scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x5c4a3a, 0.85));
+  scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x6a5646, 1.05));
 }
 
 function renderPortrait(p: CharacterPalette): string {

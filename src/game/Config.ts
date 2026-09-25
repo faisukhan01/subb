@@ -81,25 +81,36 @@ export const CAMERA_LOOK = { x: 0, y: 1.5, z: -7 };
 export const FOV_BASE = 62;
 export const FOV_SPEED_BOOST = 9;
 
-/** Scene palette — warm golden-hour subway. */
+/** Scene palette — golden-hour downtown rail corridor. */
 export const COLORS = {
-  skyTop: 0x79b7e6,
-  skyHorizon: 0xffd9ae,
-  fogNear: 55,
-  fogFar: 185,
-  gravel: 0xc4ad8d,
-  gravelDark: 0xb09a7c,
-  rail: 0x8b8f96,
-  sleeper: 0x8a6849,
-  wall: 0xd9cbb8,
-  wallTop: 0xc7b49e,
-  lampPost: 0x54595f,
-  cityGround: 0x97897a,
-  buildings: [0xf2b880, 0xe8a09a, 0xa8c698, 0xd9b38c, 0xc9a7b8, 0xead9a8],
-  trains: [0xd9480f, 0xe8b30e, 0x2f9e44, 0x8d99ae, 0xb4654a, 0xd6c05a],
+  skyTop: 0x7d9cc8,
+  skyMid: 0xe8b078,
+  skyHorizon: 0xffdca6,
+  fogNear: 48,
+  fogFar: 175,
+  ballast: 0x8a7f74,
+  concrete: 0xa8a29a,
+  platformEdge: 0xe6b23c,
+  rail: 0xc9cdd4,
+  railWeb: 0x4c4a47,
+  sleeper: 0x5a4634,
+  catenary: 0x3a3d42,
+  canopySteel: 0x2f5d50,
+  canopyRoof: 0xd8d0bc,
+  brick: 0x9c5a4a,
+  brickGrey: 0x8a8d92,
+  asphalt: 0x3a3833,
+  lampPost: 0x3d4249,
+  buildings: [0xb0705a, 0xc9a78a, 0x7d99a8, 0xa88f78, 0x8f8d96, 0xc4b49a],
+  trains: [
+    { body: 0xd9480f, stripe: 0xfff1e0 }, // signal orange
+    { body: 0x0c8599, stripe: 0xfff4d6 }, // teal express
+    { body: 0xf2b705, stripe: 0x2b2722 }, // yellow line
+    { body: 0xb9bdc2, stripe: 0xe8590c }, // silver with orange
+  ],
   coin: 0xffc93c,
   coinEmissive: 0xd98a06,
-  barrier: 0xe8590c,
+  barrier: 0xf76707,
   barrierStripe: 0xfff4e6,
   blockade: 0xc2410c,
   hoverboard: 0xff922b,
