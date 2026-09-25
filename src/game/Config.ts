@@ -117,7 +117,7 @@ export const COLORS = {
   jetpackFlame: 0xffa94d,
 } as const;
 
-/** Character palette (procedural stylized rigs). */
+/** Character palette (realistic streetwear rigs). */
 export interface CharacterPalette {
   id: "max" | "zoe" | "rex";
   displayName: string;
@@ -134,8 +134,8 @@ export interface CharacterPalette {
   shoes: number;
   soleColor?: number; // sneaker midsole accent
   backpack?: number;
-  accent?: number; // headphone band / chain / streak
-  style?: "hoodie" | "bomber" | "tank" | "uniform";
+  accent?: number; // chain / headphone cups
+  style?: "tee" | "bomber" | "tank" | "uniform";
   sunglasses?: boolean;
   beard?: boolean;
   wristbands?: boolean;
@@ -144,54 +144,51 @@ export interface CharacterPalette {
 export const CHARACTERS: CharacterPalette[] = [
   {
     id: "max",
-    displayName: "Max",
-    tagline: "The original tag artist",
+    displayName: "Marcus",
+    tagline: "Reyes Park's finest tag artist",
     unlockCost: 0,
     perk: "+5% coin value",
-    skin: 0xf1c19d,
-    hair: 0x3b2a1e,
-    cap: 0xe03131,
+    skin: 0x8a5a3b,
+    hair: 0x17130f,
+    cap: 0x2f5233,
     capBrimBack: true,
-    torso: 0xe03131,
-    sleeves: 0xe03131,
-    pants: 0x4a4e69,
-    shoes: 0xf8f5f0,
-    soleColor: 0xe03131,
-    backpack: 0xf76707,
-    style: "hoodie",
+    torso: 0xe8e6e0, // washed white tee
+    sleeves: 0xe8e6e0,
+    pants: 0x3d4553, // baggy washed denim
+    shoes: 0xe9e6df,
+    soleColor: 0x2a2622,
+    backpack: 0xb3541e,
+    style: "tee",
   },
   {
     id: "zoe",
-    displayName: "Zoe",
-    tagline: "Beats. Speed. Paint.",
+    displayName: "Nina",
+    tagline: "Paints the whole line overnight",
     unlockCost: 500,
     perk: "+10% magnet duration",
-    skin: 0xf7d3b3,
-    hair: 0x2d2723,
-    torso: 0x12b886,
-    sleeves: 0x0ca678,
-    pants: 0x343a40,
-    shoes: 0xf8f5f0,
-    soleColor: 0xffd43b,
-    accent: 0xffd43b,
+    skin: 0xeab994,
+    hair: 0x241b14,
+    torso: 0x565b48, // olive MA-1 bomber
+    sleeves: 0x4c5140,
+    pants: 0x23262b, // black leggings
+    shoes: 0xe9e6df,
+    soleColor: 0x8c2f26,
+    accent: 0xd4a53a,
     style: "bomber",
   },
   {
     id: "rex",
-    displayName: "Rex",
-    tagline: "Wall of muscle, heart of gold",
+    displayName: "Bruno",
+    tagline: "Ex-boxer, current legend",
     unlockCost: 1500,
     perk: "+8% jump power",
-    skin: 0xb98663,
-    hair: 0x111111,
-    cap: 0x3a3f46,
-    capBrimBack: true,
-    torso: 0xe8590c,
-    sleeves: 0xe8590c,
-    pants: 0x495057,
-    shoes: 0xf8f5f0,
-    soleColor: 0xe8590c,
-    accent: 0xffd43b,
+    skin: 0xc08a58,
+    hair: 0x141210,
+    torso: 0x878c93, // heather grey tank
+    pants: 0x33383f, // charcoal joggers
+    shoes: 0xe9e6df,
+    soleColor: 0x8c2f26,
+    accent: 0xd4a53a, // gold chain
     style: "tank",
     beard: true,
     wristbands: true,

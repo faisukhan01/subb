@@ -56,7 +56,7 @@ export class GuardManager {
       new THREE.MeshStandardMaterial({ color: 0xffd43b, metalness: 0.8, roughness: 0.25, emissive: 0x8a6d00, emissiveIntensity: 0.35 }),
     );
     badge.rotation.x = Math.PI / 2;
-    badge.position.set(0, 0.28, 0.218);
+    badge.position.set(0, 0.262, 0.098);
     this.guardRig.head.add(badge);
 
     this.group.add(this.guardRig.root);

@@ -242,12 +242,10 @@ export class Player {
     this.rig.root.rotation.z = -this.lean;
 
     if (this.rolling > 0) {
-      const prev = this.rolling;
       this.rolling = Math.max(0, this.rolling - dt);
-      // Forward flip progress over the roll duration
-      const t = 1 - this.rolling / ROLL_DURATION;
-      this.rig.spin.rotation.x = -Math.PI * 2 * t;
-      if (prev > 0 && this.rolling === 0) this.rig.spin.rotation.x = 0;
+      // Forward flip progress over the roll duration (animator owns the spin)
+      this.animator.setRollProgress(1 - this.rolling / ROLL_DURATION);
+      if (this.rolling === 0) this.animator.setRollProgress(0);
     }
 
     if (this.flying) {

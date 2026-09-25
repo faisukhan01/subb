@@ -34,9 +34,9 @@ function ensureStudio(): void {
 
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(34, 1, 0.1, 30);
-  camera.position.set(1.05, 1.5, 3.6);
-  camera.lookAt(0, 1.02, 0);
+  camera = new THREE.PerspectiveCamera(30, 1, 0.1, 30);
+  camera.position.set(0.62, 1.62, 2.35);
+  camera.lookAt(0, 1.38, 0);
 
   // Soft three-point studio lighting
   const key = new THREE.DirectionalLight(0xfff2e0, 2.9);
