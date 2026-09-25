@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Home, RotateCcw, Play, Volume2, VolumeX } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useGameStore } from "@/lib/gameStore";
 import { backToMenu, resumeRun, startRun } from "@/lib/gameActions";
 import ResumeCountdown from "./Countdown";
@@ -26,7 +25,7 @@ export default function PauseMenu() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       role="dialog"
       aria-label="Game paused"
     >
@@ -34,48 +33,54 @@ export default function PauseMenu() {
         initial={{ scale: 0.9, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 240, damping: 20 }}
-        className="w-80 rounded-3xl border border-white/10 bg-zinc-950/85 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/10 backdrop-blur-md"
+        className="panel-glass w-80 overflow-hidden rounded-3xl p-6"
       >
+        {/* Hazard-tape strip — subway barrier texture, purely decorative */}
+        <div className="stripes-warm -mx-6 -mt-6 mb-4 h-1.5 border-b border-white/10" aria-hidden />
         <Logo className="mx-auto w-32" />
-        <h2 className="mt-3 text-center font-display text-3xl uppercase tracking-wide text-white">
+        <h2 className="mt-2 text-center font-display text-3xl uppercase tracking-[0.12em] text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.6)]">
           Paused
         </h2>
+        <p className="mt-0.5 text-center text-[11px] font-bold uppercase tracking-[0.28em] text-amber-300/80">
+          Catch your breath
+        </p>
 
         <div className="mt-5 space-y-2.5">
-          <Button
+          <button
+            type="button"
             onClick={() => setCounting(true)}
-            className="h-12 w-full rounded-2xl bg-gradient-to-b from-amber-400 to-orange-600 font-display text-base uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(234,88,12,0.45),inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-amber-300/50 transition-[filter] hover:brightness-110 focus-visible:outline-none"
+            className="btn-arcade btn-arcade-primary flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-base focus-visible:outline-none"
           >
-            <Play className="h-5 w-5 fill-white" aria-hidden />
+            <Play className="h-5 w-5 fill-current" aria-hidden />
             Resume
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={() => {
               setCounting(false);
               startRun();
             }}
-            variant="secondary"
-            className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-white shadow-lg backdrop-blur-md hover:bg-white/10"
+            className="btn-arcade btn-arcade-dark flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-sm focus-visible:outline-none"
           >
             <RotateCcw className="h-4 w-4" aria-hidden />
             Restart run
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={backToMenu}
-            variant="secondary"
-            className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-white shadow-lg backdrop-blur-md hover:bg-white/10"
+            className="btn-arcade btn-arcade-dark flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-sm focus-visible:outline-none"
           >
             <Home className="h-4 w-4" aria-hidden />
             Main menu
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={() => setMuted(!muted)}
-            variant="ghost"
-            className="h-10 w-full rounded-2xl text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none"
           >
-            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            {muted ? <VolumeX className="h-4 w-4" aria-hidden /> : <Volume2 className="h-4 w-4" aria-hidden />}
             {muted ? "Sound off" : "Sound on"}
-          </Button>
+          </button>
         </div>
       </motion.div>
     </motion.div>

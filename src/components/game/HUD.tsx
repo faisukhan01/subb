@@ -1,8 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Coins, Pause, Rocket, Zap, Magnet, Footprints, Sparkles, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Pause, Rocket, Zap, Magnet, Footprints, Sparkles, Target } from "lucide-react";
 import { useGameStore } from "@/lib/gameStore";
 import { pauseRun } from "@/lib/gameActions";
 import { formatScore } from "@/game/utils";
@@ -16,18 +15,19 @@ const POWERUP_ICON: Record<PowerUpType, typeof Magnet> = {
   hoverboard: Sparkles,
 };
 
+/** Warm arcade palette shared with HowToPlay — no indigo/purple. */
 const POWERUP_COLOR: Record<PowerUpType, string> = {
   magnet: "bg-red-500",
-  jetpack: "bg-sky-500",
-  multiplier: "bg-green-500",
-  sneakers: "bg-amber-500",
-  hoverboard: "bg-violet-500",
+  jetpack: "bg-orange-500",
+  multiplier: "bg-yellow-400",
+  sneakers: "bg-green-500",
+  hoverboard: "bg-cyan-400",
 };
 
 /**
- * In-run HUD: display-font score, multiplier, powerup timer pills, coin
- * counter with pop, missions tracker and toasts. Pointer-events pass
- * through everywhere except the pause button.
+ * In-run HUD: glass score pill with popping multiplier, coin pill with gold
+ * coin dot, stacked powerup timer chips, missions ticker and toasts.
+ * Pointer events pass through everywhere except the pause button.
  */
 export default function HUD() {
   const phase = useGameStore((s) => s.phase);
@@ -41,22 +41,40 @@ export default function HUD() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
+      {/* Legibility scrim along the top edge only */}
+      <div
+        className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent"
+        aria-hidden
+      />
+
       {/* Score block */}
       <div className="absolute left-3 top-3 sm:left-5 sm:top-5">
-        <div className="font-display text-3xl tabular-nums text-white drop-shadow-[0_3px_10px_rgba(0,0,0,0.85)] sm:text-4xl">
-          {formatScore(stats.score)}
-        </div>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="rounded-full bg-gradient-to-b from-amber-400 to-orange-500 px-2 py-0.5 text-[11px] font-black text-amber-950 shadow ring-1 ring-amber-300/50">
-            ×{stats.multiplier}
-          </span>
-          <span className="text-xs font-semibold tabular-nums text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+        <div className="chip-glass rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5">
+          <div className="text-[9px] font-black uppercase tracking-[0.32em] text-amber-300/90">
+            Score
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="font-display text-3xl leading-none tabular-nums text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] sm:text-4xl">
+              {formatScore(stats.score)}
+            </div>
+            {/* Multiplier badge — spring-pops whenever its value changes */}
+            <motion.span
+              key={`mult-${stats.multiplier}`}
+              initial={{ scale: 0.3, rotate: -12, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 520, damping: 14 }}
+              className="mb-0.5 inline-flex items-center rounded-md bg-gradient-to-b from-yellow-300 to-orange-500 px-1.5 py-0.5 font-display text-xs leading-none text-amber-950 shadow-[0_0_14px_rgba(251,191,36,0.55),inset_0_1px_0_rgba(255,255,255,0.5)]"
+            >
+              ×{stats.multiplier}
+            </motion.span>
+          </div>
+          <div className="mt-1 text-xs font-black tabular-nums text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
             {formatScore(stats.distance)} m
-          </span>
+          </div>
         </div>
 
-        {/* Powerup timers — slim glass pills */}
-        <div className="mt-2.5 space-y-1.5">
+        {/* Powerup timers — vertical stack of glass chips */}
+        <div className="mt-2 space-y-1.5">
           <AnimatePresence>
             {powerups.map((p) => {
               const Icon = POWERUP_ICON[p.type];
@@ -64,23 +82,26 @@ export default function HUD() {
               return (
                 <motion.div
                   key={p.type}
-                  initial={{ opacity: 0, x: -14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -14 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                  className="flex w-40 items-center gap-2 rounded-full border border-white/10 bg-zinc-950/60 p-1 pr-2.5 shadow-lg backdrop-blur-md"
+                  initial={{ opacity: 0, x: -16, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -16, scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 340, damping: 26 }}
+                  className="chip-glass flex w-44 items-center gap-2 rounded-xl p-1.5 pr-2"
                 >
                   <div
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${POWERUP_COLOR[p.type]} shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]`}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${POWERUP_COLOR[p.type]} shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]`}
                   >
-                    <Icon className="h-3.5 w-3.5 text-white" aria-hidden />
+                    <Icon className="h-4 w-4 text-white" aria-hidden />
                   </div>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/50">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/55">
                     <div
                       className={`h-full rounded-full ${POWERUP_COLOR[p.type]} transition-[width] duration-150`}
                       style={{ width: `${pct * 100}%` }}
                     />
                   </div>
+                  <span className="w-5 text-right text-[10px] font-black tabular-nums text-white/85">
+                    {Math.ceil(p.remaining)}
+                  </span>
                 </motion.div>
               );
             })}
@@ -92,35 +113,31 @@ export default function HUD() {
       <div className="absolute right-3 top-3 flex items-center gap-2 sm:right-5 sm:top-5">
         <motion.div
           key={coinPopKey}
-          initial={{ scale: 1.3 }}
+          initial={{ scale: 1.28 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 500, damping: 18 }}
-          className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-zinc-950/60 px-3 py-2 shadow-lg backdrop-blur-md"
+          className="chip-glass flex h-11 items-center gap-2 rounded-2xl px-3.5"
         >
-          <Coins
-            className="h-4 w-4 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-            aria-hidden
-          />
-          <span className="text-sm font-black tabular-nums text-white">
+          <span className="coin-dot" aria-hidden />
+          <span className="text-base font-black tabular-nums leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             {formatScore(stats.coins)}
           </span>
         </motion.div>
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           onClick={pauseRun}
-          className="pointer-events-auto h-11 w-11 rounded-2xl border border-white/10 bg-zinc-950/60 text-white shadow-lg backdrop-blur-md hover:bg-zinc-900/80"
+          className="chip-glass pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none"
           aria-label="Pause game"
         >
-          <Pause className="h-5 w-5" />
-        </Button>
+          <Pause className="h-5 w-5" aria-hidden />
+        </button>
       </div>
 
-      {/* Missions tracker */}
-      <div className="absolute bottom-3 left-3 hidden w-56 sm:bottom-5 sm:left-5 sm:block">
-        <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-3 shadow-xl backdrop-blur-md">
-          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.25em] text-amber-300/90">
-            <Target className="h-3 w-3" aria-hidden /> Missions
+      {/* Missions ticker */}
+      <div className="absolute bottom-4 left-3 hidden w-64 sm:left-5 sm:block">
+        <div className="chip-glass rounded-2xl p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-amber-300">
+            <Target className="h-3.5 w-3.5" aria-hidden /> Missions
           </div>
           <div className="mt-2 space-y-1.5">
             {missions.slice(0, 3).map((m, i) => (
@@ -128,7 +145,13 @@ export default function HUD() {
                 key={`${m.kind}-${i}`}
                 animate={
                   m.done
-                    ? { boxShadow: ["0 0 0 0 rgba(251,191,36,0)", "0 0 14px 0 rgba(251,191,36,0.45)", "0 0 0 0 rgba(251,191,36,0)"] }
+                    ? {
+                        boxShadow: [
+                          "0 0 0 0 rgba(251,191,36,0)",
+                          "0 0 14px 0 rgba(251,191,36,0.45)",
+                          "0 0 0 0 rgba(251,191,36,0)",
+                        ],
+                      }
                     : {}
                 }
                 transition={{ duration: 1, repeat: m.done ? 2 : 0 }}
@@ -136,15 +159,15 @@ export default function HUD() {
                   m.done ? "bg-amber-500/10 ring-amber-400/40" : "bg-white/5 ring-white/10"
                 }`}
               >
-                <div className="flex justify-between text-[11px] font-semibold text-white/85">
+                <div className="flex justify-between text-[11px] font-bold text-white/85">
                   <span className="truncate">{m.label}</span>
-                  <span className="ml-2 tabular-nums text-amber-300">
+                  <span className="ml-2 shrink-0 tabular-nums text-amber-300">
                     {Math.floor(m.progress)}/{m.target}
                   </span>
                 </div>
                 <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/15">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-[width]"
+                    className="h-full rounded-full bg-gradient-to-r from-yellow-300 to-orange-500 transition-[width]"
                     style={{ width: `${Math.min(100, (m.progress / m.target) * 100)}%` }}
                   />
                 </div>
@@ -155,19 +178,24 @@ export default function HUD() {
       </div>
 
       {/* Toasts (mission complete etc.) */}
-      <div className="absolute left-1/2 top-16 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="absolute left-1/2 top-16 z-20 flex -translate-x-1/2 flex-col items-center gap-2 px-4">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, y: -16, scale: 0.9 }}
+              initial={{ opacity: 0, y: -18, scale: 0.88 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              exit={{ opacity: 0, y: -10, scale: 0.94 }}
               transition={{ type: "spring", stiffness: 380, damping: 24 }}
-              className="rounded-2xl border border-amber-400/30 bg-zinc-950/85 px-4 py-2 text-center shadow-[0_12px_35px_rgba(0,0,0,0.5)] ring-1 ring-amber-400/20 backdrop-blur-md"
+              className="chip-glass flex items-center gap-2.5 rounded-2xl px-4 py-2"
             >
-              <div className="font-display text-sm text-amber-300">{t.text}</div>
-              {t.sub && <div className="text-xs font-medium text-white/70">{t.sub}</div>}
+              <span className="coin-dot h-2 w-2" aria-hidden />
+              <div className="text-center">
+                <div className="font-display text-sm leading-tight text-amber-200">{t.text}</div>
+                {t.sub && (
+                  <div className="text-[11px] font-semibold text-white/70">{t.sub}</div>
+                )}
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>

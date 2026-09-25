@@ -30,14 +30,30 @@ const POWERUPS: Array<{ icon: typeof Magnet; type: PowerUpType; name: string; te
   { icon: Sparkles, type: "hoverboard", name: "Hoverboard", text: "Absorbs one crash — ride the wave" },
 ];
 
-/** Tile colors mirror the in-run HUD pills so help ↔ HUD read as one system. */
+/** Tile colors mirror the in-run HUD chips so help ↔ HUD read as one system. */
 const POWERUP_COLOR: Record<PowerUpType, string> = {
   magnet: "bg-red-500",
-  jetpack: "bg-sky-500",
-  multiplier: "bg-green-500",
-  sneakers: "bg-amber-500",
-  hoverboard: "bg-violet-500",
+  jetpack: "bg-orange-500",
+  multiplier: "bg-yellow-400",
+  sneakers: "bg-green-500",
+  hoverboard: "bg-cyan-400",
 };
+
+/** Render "A / B / C" key hints as compact keycap chips. */
+function KeyHints({ keys }: { keys: string }) {
+  return (
+    <span className="mt-1 flex flex-wrap items-center gap-1">
+      {keys.split("/").map((k) => (
+        <kbd
+          key={k}
+          className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white/75 ring-1 ring-white/15"
+        >
+          {k.trim()}
+        </kbd>
+      ))}
+    </span>
+  );
+}
 
 /** Rules & controls reference shown from the main menu. */
 export default function HowToPlay() {
@@ -51,14 +67,14 @@ export default function HowToPlay() {
           {CONTROLS.map((c) => (
             <li
               key={c.text}
-              className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/10 backdrop-blur-sm"
+              className="chip-glass flex items-center gap-3 rounded-2xl px-3 py-2.5"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 ring-1 ring-amber-400/20">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 ring-1 ring-amber-400/25">
                 <c.icon className="h-4 w-4 text-amber-300" aria-hidden />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-white">{c.text}</div>
-                <div className="truncate text-[11px] text-white/50">{c.keys}</div>
+                <div className="text-sm font-bold text-white">{c.text}</div>
+                <KeyHints keys={c.keys} />
               </div>
             </li>
           ))}
@@ -73,16 +89,16 @@ export default function HowToPlay() {
           {POWERUPS.map((p) => (
             <li
               key={p.name}
-              className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/10 backdrop-blur-sm"
+              className="chip-glass flex items-center gap-3 rounded-2xl px-3 py-2.5"
             >
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${POWERUP_COLOR[p.type]} shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${POWERUP_COLOR[p.type]} shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]`}
               >
                 <p.icon className="h-4 w-4 text-white" aria-hidden />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-white">{p.name}</div>
-                <div className="text-[11px] text-white/50">{p.text}</div>
+                <div className="text-sm font-bold text-white">{p.name}</div>
+                <div className="text-[11px] font-semibold text-white/50">{p.text}</div>
               </div>
             </li>
           ))}
@@ -93,7 +109,7 @@ export default function HowToPlay() {
         <h4 className="mb-2.5 flex items-center gap-2 font-display text-xs uppercase tracking-[0.2em] text-amber-400">
           <TrendingUp className="h-4 w-4" aria-hidden /> Scoring
         </h4>
-        <p className="rounded-2xl bg-white/[0.04] px-3.5 py-3 text-sm leading-relaxed text-white/70 ring-1 ring-white/10 backdrop-blur-sm">
+        <p className="chip-glass rounded-2xl px-3.5 py-3 text-sm leading-relaxed font-semibold text-white/70">
           Score = distance × multiplier. Complete missions to raise your multiplier (up to
           ×5), and grab 2× power-ups to double it further. You can run on train roofs for
           risky coin lines — but oncoming trains never stop.

@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, animate, motion } from "framer-motion";
 import { Coins, Home, RotateCcw, Ruler, Trophy } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGameStore } from "@/lib/gameStore";
 import { backToMenu, startRun } from "@/lib/gameActions";
 import { formatScore } from "@/game/utils";
 import LeaderboardPanel from "./LeaderboardPanel";
 
-/** Post-run screen: stamped BUSTED! title, score, PB ribbon, stats, rank, replay. */
+/** Spring-eased count-up so the final numbers feel earned. */
+function useCountUp(target: number, duration = 0.9): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    const controls = animate(0, target, {
+      duration,
+      ease: "easeOut",
+      onUpdate: (v) => setValue(v),
+    });
+    return () => controls.stop();
+  }, [target, duration]);
+  return value;
+}
+
+/** Post-run screen: wobbling BUSTED! stamp, count-up score, PB ribbon
+ *  with shine sweep, stats, global rank, replay. */
 export default function GameOverModal() {
   const phase = useGameStore((s) => s.phase);
   const lastRun = useGameStore((s) => s.lastRun);
@@ -20,6 +34,10 @@ export default function GameOverModal() {
   const setPlayerName = useGameStore((s) => s.setPlayerName);
   const [showBoard, setShowBoard] = useState(false);
   const [nameDraft, setNameDraft] = useState(playerName);
+
+  const score = useCountUp(lastRun?.score ?? 0, 1.1);
+  const coins = useCountUp(lastRun?.coins ?? 0, 0.9);
+  const distance = useCountUp(lastRun?.distance ?? 0, 0.9);
 
   if (phase !== "over" || !lastRun) return null;
 
@@ -31,7 +49,7 @@ export default function GameOverModal() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto bg-gradient-to-b from-black/50 via-black/65 to-black/85 p-4 backdrop-blur-sm"
+        className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto bg-gradient-to-b from-black/55 via-black/70 to-black/85 p-4 backdrop-blur-sm"
         role="dialog"
         aria-label="Run results"
       >
@@ -40,39 +58,39 @@ export default function GameOverModal() {
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: "spring", stiffness: 220, damping: 20 }}
-          className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950/85 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/10 backdrop-blur-md"
+          className="panel-glass w-full max-w-md rounded-3xl p-6"
         >
-          {/* Stamp */}
+          {/* Stamp — slams in and wobbles to rest */}
           <motion.div
-            initial={{ scale: 2, opacity: 0, rotate: 6 }}
+            initial={{ scale: 2.4, opacity: 0, rotate: 10 }}
             animate={{ scale: 1, opacity: 1, rotate: -2 }}
-            transition={{ delay: 0.08, type: "spring", stiffness: 300, damping: 16 }}
+            transition={{ delay: 0.05, type: "spring", stiffness: 260, damping: 11 }}
           >
-            <h2 className="bg-gradient-to-b from-amber-200 via-orange-400 to-red-500 bg-clip-text text-center font-display text-4xl uppercase tracking-wide text-transparent drop-shadow-[0_4px_0_rgba(0,0,0,0.45)]">
+            <h2 className="bg-gradient-to-b from-yellow-200 via-orange-400 to-red-500 bg-clip-text text-center font-display text-5xl uppercase tracking-wide text-transparent drop-shadow-[0_4px_0_rgba(0,0,0,0.45)] sm:text-6xl">
               Busted!
             </h2>
           </motion.div>
 
           {/* Final score */}
           <div className="mt-4 text-center">
-            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/50">
+            <div className="text-[10px] font-black uppercase tracking-[0.32em] text-white/50">
               {isPersonalBest ? "New personal best!" : "Final score"}
             </div>
             <div
               className={`mt-0.5 font-display text-5xl tabular-nums sm:text-6xl ${
                 isPersonalBest
-                  ? "bg-gradient-to-b from-amber-300 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_6px_24px_rgba(245,158,11,0.45)]"
+                  ? "bg-gradient-to-b from-yellow-200 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_6px_24px_rgba(245,158,11,0.45)]"
                   : "text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
               }`}
             >
-              {formatScore(lastRun.score)}
+              {formatScore(score)}
             </div>
             {isPersonalBest && (
               <motion.div
-                initial={{ scale: 0, rotate: -6 }}
+                initial={{ scale: 0, rotate: -8 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 320, damping: 13 }}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-1 text-[11px] font-black uppercase tracking-widest text-amber-950 shadow-[0_6px_20px_rgba(245,158,11,0.5)]"
+                transition={{ delay: 0.35, type: "spring", stiffness: 320, damping: 13 }}
+                className="shine-sweep mt-2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-300 to-orange-500 px-4 py-1 text-[11px] font-black uppercase tracking-widest text-amber-950 shadow-[0_6px_20px_rgba(245,158,11,0.5)]"
               >
                 <Trophy className="h-3.5 w-3.5" aria-hidden />
                 New personal best
@@ -82,15 +100,23 @@ export default function GameOverModal() {
 
           {/* Stat chips */}
           <div className="mt-5 grid grid-cols-2 gap-2.5">
-            <StatCard icon={Coins} label="Coins" value={formatScore(lastRun.coins)} />
-            <StatCard icon={Ruler} label="Distance" value={`${formatScore(lastRun.distance)} m`} />
+            <StatCard
+              icon={Coins}
+              label="Coins"
+              value={formatScore(coins)}
+            />
+            <StatCard
+              icon={Ruler}
+              label="Distance"
+              value={`${formatScore(distance)} m`}
+            />
           </div>
 
           {/* Rank + name */}
-          <div className="mt-4 rounded-2xl bg-white/5 p-3.5 ring-1 ring-white/10">
+          <div className="chip-glass mt-4 rounded-2xl p-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/50">
+                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">
                   Global rank
                 </div>
                 <div className="font-display text-2xl tabular-nums text-amber-300">
@@ -111,7 +137,7 @@ export default function GameOverModal() {
               </div>
             </div>
             {lastSubmit?.personalBest && (
-              <p className="mt-2 text-[11px] font-semibold text-amber-300/90">
+              <p className="mt-2 text-[11px] font-bold text-amber-300/90">
                 Beat your previous best of {formatScore(lastSubmit.best)} — nice run!
               </p>
             )}
@@ -119,31 +145,32 @@ export default function GameOverModal() {
 
           {/* Actions */}
           <div className="mt-5 space-y-2.5">
-            <Button
+            <button
+              type="button"
               onClick={startRun}
-              className="h-12 w-full rounded-2xl bg-gradient-to-b from-amber-400 to-orange-600 font-display text-base uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(234,88,12,0.45),inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-amber-300/50 transition-[filter] hover:brightness-110 focus-visible:outline-none"
+              className="btn-arcade btn-arcade-primary flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-lg focus-visible:outline-none"
             >
               <RotateCcw className="h-5 w-5" aria-hidden />
               Run again
-            </Button>
+            </button>
             <div className="grid grid-cols-2 gap-2.5">
-              <Button
-                variant="secondary"
+              <button
+                type="button"
                 onClick={() => setShowBoard((v) => !v)}
-                className="h-11 rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-white shadow-lg backdrop-blur-md hover:bg-white/10"
                 aria-expanded={showBoard}
+                className="btn-arcade btn-arcade-dark flex h-11 items-center justify-center gap-2 rounded-2xl text-sm focus-visible:outline-none"
               >
                 <Trophy className="h-4 w-4 text-amber-400" aria-hidden />
                 {showBoard ? "Hide" : "Ranks"}
-              </Button>
-              <Button
-                variant="secondary"
+              </button>
+              <button
+                type="button"
                 onClick={backToMenu}
-                className="h-11 rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-white shadow-lg backdrop-blur-md hover:bg-white/10"
+                className="btn-arcade btn-arcade-dark flex h-11 items-center justify-center gap-2 rounded-2xl text-sm focus-visible:outline-none"
               >
                 <Home className="h-4 w-4" aria-hidden />
                 Menu
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -155,7 +182,7 @@ export default function GameOverModal() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 max-h-64 overflow-y-auto rounded-2xl bg-black/40 p-2 ring-1 ring-white/10">
+                <div className="chip-glass mt-4 max-h-64 overflow-y-auto rounded-2xl p-2">
                   <LeaderboardPanel />
                 </div>
               </motion.div>
@@ -177,12 +204,14 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl bg-white/5 px-3.5 py-3 ring-1 ring-white/10">
-      <div className="rounded-xl bg-amber-500/15 p-2 ring-1 ring-amber-400/20">
+    <div className="chip-glass flex items-center gap-2.5 rounded-2xl px-3.5 py-3">
+      <div className="rounded-xl bg-amber-500/15 p-2 ring-1 ring-amber-400/25">
         <Icon className="h-4 w-4 text-amber-400" aria-hidden />
       </div>
-      <div>
-        <div className="text-[10px] font-bold uppercase tracking-widest text-white/50">{label}</div>
+      <div className="min-w-0">
+        <div className="text-[10px] font-black uppercase tracking-widest text-white/50">
+          {label}
+        </div>
         <div className="text-lg font-black tabular-nums text-white">{value}</div>
       </div>
     </div>

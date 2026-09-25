@@ -1,21 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Titan_One } from "next/font/google";
+import { Baloo_2, Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-/** UI font — geometric, friendly, reads well at small sizes. */
-const outfit = Outfit({
-  variable: "--font-outfit",
+/** Body font — rounded, friendly, highly readable at small HUD sizes. */
+const nunito = Nunito({
+  variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
-/** Display font — chunky arcade numerals/headers (logo, score, titles). */
-const titanOne = Titan_One({
+/** Display font — chunky arcade lettering (logo, score numerals, titles, CTA labels). */
+const baloo = Baloo_2({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -56,7 +56,7 @@ export default function RootLayout({
   return (
     // Font variables live on <html> so :root-level theme mappings
     // (--default-font-family, .font-display) resolve everywhere.
-    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${titanOne.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${nunito.variable} ${baloo.variable}`}>
       <body className="antialiased bg-background text-foreground overscroll-none">
         {children}
         <Toaster />
