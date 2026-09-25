@@ -1,18 +1,19 @@
 import { useId } from "react";
 
 /**
- * SUBB SURFERS brand lockup.
+ * SUBB SURFERS brand lockup — cinematic GTA-style poster type.
  *
- * SVG text with layered "arcade sticker" treatment per word: dark outer
- * outline, warm-cream rim, amber→red gradient fill, then a top-half gloss
- * pass for a molded-plastic highlight. `textLength` pins the wordmark width
- * so centering and the italic skew stay exact regardless of font-load
- * timing. Sized via className; render font weight follows --font-display.
+ * "SUBB" is near-white with a heavy black outline and top gloss; "SURFERS"
+ * burns in a saturated orange gradient beneath it. Layered per word: dark
+ * outer outline → warm rim → gradient fill → top-half gloss pass.
+ * `textLength` pins the wordmark width so centering and the italic skew
+ * stay exact regardless of font-load timing.
  */
 export default function Logo({ className = "" }: { className?: string }) {
   const rawId = useId();
   const safe = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
-  const gradId = `subb-logo-grad-${safe}`;
+  const whiteId = `subb-logo-white-${safe}`;
+  const orangeId = `subb-logo-orange-${safe}`;
   const glossId = `subb-logo-gloss-${safe}`;
 
   return (
@@ -23,27 +24,25 @@ export default function Logo({ className = "" }: { className?: string }) {
       className={`h-auto w-full ${className}`}
       style={{
         filter:
-          "drop-shadow(0 5px 0 rgba(10, 6, 3, 0.55)) drop-shadow(0 20px 44px rgba(234, 88, 12, 0.5))",
+          "drop-shadow(0 6px 0 rgba(5, 5, 8, 0.6)) drop-shadow(0 24px 48px rgba(0, 0, 0, 0.55))",
       }}
     >
       <defs>
-        <linearGradient
-          id={gradId}
-          x1="320"
-          y1="14"
-          x2="320"
-          y2="210"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0" stopColor="#fef3c7" />
-          <stop offset="0.34" stopColor="#fde047" />
-          <stop offset="0.62" stopColor="#fbbf24" />
-          <stop offset="0.84" stopColor="#f97316" />
-          <stop offset="1" stopColor="#ea440c" />
+        {/* GTA-white for the top word */}
+        <linearGradient id={whiteId} x1="320" y1="14" x2="320" y2="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="0.55" stopColor="#eceff2" />
+          <stop offset="1" stopColor="#aab2ba" />
+        </linearGradient>
+        {/* Burning orange for the sub word */}
+        <linearGradient id={orangeId} x1="320" y1="150" x2="320" y2="212" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ffd9a8" />
+          <stop offset="0.4" stopColor="#ff9f43" />
+          <stop offset="1" stopColor="#e8590c" />
         </linearGradient>
         {/* Top-half gloss — fades out below 45% height for a molded look. */}
         <linearGradient id={glossId} x1="0" y1="0" x2="0" y2="0.52">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.5" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -52,18 +51,18 @@ export default function Logo({ className = "" }: { className?: string }) {
       <g
         transform="translate(11 4) skewX(-6) rotate(-1.6 320 120)"
         style={{
-          fontFamily: "var(--font-display), system-ui, sans-serif",
+          fontFamily: "var(--font-display), Impact, system-ui, sans-serif",
           fontWeight: 800,
         }}
         textAnchor="middle"
       >
-        {/* SUBB */}
-        <g fill="none" stroke="#170d06" strokeWidth="19" strokeLinejoin="round">
+        {/* SUBB — white */}
+        <g fill="none" stroke="#0c0c10" strokeWidth="19" strokeLinejoin="round">
           <text x="316" y="118" fontSize="138" textLength="356" lengthAdjust="spacing">
             SUBB
           </text>
         </g>
-        <g fill="none" stroke="#fff7e6" strokeWidth="8.5" strokeLinejoin="round">
+        <g fill="none" stroke="#f8f9fa" strokeWidth="7" strokeLinejoin="round">
           <text x="316" y="118" fontSize="138" textLength="356" lengthAdjust="spacing">
             SUBB
           </text>
@@ -74,7 +73,7 @@ export default function Logo({ className = "" }: { className?: string }) {
           fontSize="138"
           textLength="356"
           lengthAdjust="spacing"
-          fill={`url(#${gradId})`}
+          fill={`url(#${whiteId})`}
         >
           SUBB
         </text>
@@ -89,13 +88,13 @@ export default function Logo({ className = "" }: { className?: string }) {
           SUBB
         </text>
 
-        {/* SURFERS */}
-        <g fill="none" stroke="#170d06" strokeWidth="14" strokeLinejoin="round">
+        {/* SURFERS — orange */}
+        <g fill="none" stroke="#0c0c10" strokeWidth="14" strokeLinejoin="round">
           <text x="327" y="190" fontSize="60" textLength="384" lengthAdjust="spacing">
             SURFERS
           </text>
         </g>
-        <g fill="none" stroke="#fff7e6" strokeWidth="6.5" strokeLinejoin="round">
+        <g fill="none" stroke="#ffe3c2" strokeWidth="5" strokeLinejoin="round">
           <text x="327" y="190" fontSize="60" textLength="384" lengthAdjust="spacing">
             SURFERS
           </text>
@@ -106,7 +105,7 @@ export default function Logo({ className = "" }: { className?: string }) {
           fontSize="60"
           textLength="384"
           lengthAdjust="spacing"
-          fill={`url(#${gradId})`}
+          fill={`url(#${orangeId})`}
         >
           SURFERS
         </text>
@@ -122,32 +121,32 @@ export default function Logo({ className = "" }: { className?: string }) {
         </text>
       </g>
 
-      {/* Four-point sparkles — arcade sticker glitter, right of the wordmark */}
-      <g fill="#fde047" stroke="#92400e" strokeWidth="2.5" strokeLinejoin="round">
+      {/* White-hot sparkles right of the wordmark */}
+      <g fill="#f8f9fa" stroke="#0c0c10" strokeWidth="2.5" strokeLinejoin="round">
         <path d="M568 40 L574.5 55.5 L590 62 L574.5 68.5 L568 84 L561.5 68.5 L546 62 L561.5 55.5 Z" />
       </g>
-      <g fill="#fff7e6" stroke="#b45309" strokeWidth="2" strokeLinejoin="round">
+      <g fill="#ff9f43" stroke="#0c0c10" strokeWidth="2" strokeLinejoin="round">
         <path d="M596 14 L600 23.5 L609.5 27.5 L600 31.5 L596 41 L592 31.5 L582.5 27.5 L592 23.5 Z" />
       </g>
-      <g fill="#fbbf24" opacity="0.9">
+      <g fill="#eceff2" opacity="0.9">
         <circle cx="540" cy="26" r="4.5" />
       </g>
 
-      {/* Amber speed swoosh — symmetric under the wordmark, with highlight */}
+      {/* Orange speed swoosh — symmetric under the wordmark, with highlight */}
       <path
         d="M 168 218 Q 320 244 472 212"
         fill="none"
-        stroke={`url(#${gradId})`}
+        stroke={`url(#${orangeId})`}
         strokeWidth="9"
         strokeLinecap="round"
       />
       <path
         d="M 174 213.5 Q 320 237.5 466 208.5"
         fill="none"
-        stroke="#fff7e6"
+        stroke="#ffffff"
         strokeWidth="2.5"
         strokeLinecap="round"
-        opacity="0.9"
+        opacity="0.85"
       />
     </svg>
   );

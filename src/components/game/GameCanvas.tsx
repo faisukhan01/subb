@@ -128,7 +128,7 @@ export default function GameCanvas() {
     <div
       ref={containerRef}
       id="game-canvas"
-      className="absolute inset-0 select-none"
+      className={`absolute inset-0 select-none ${phase === "over" ? "wasted-scene" : ""}`}
       aria-label="SUBB SURFERS 3D game viewport"
     />
   );

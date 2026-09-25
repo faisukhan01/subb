@@ -308,3 +308,53 @@
     transform: scale(1.05);
   }
 }
+
+/* ─── Cinematic GTA-style layer ─────────────────────────────────────
+   Condensed poster typography, cash-green HUD numerals, radar sweep
+   and the desaturated "BUSTED" slow-mo treatment. */
+
+.font-gta {
+  font-family: Impact, Haettenschweiler, "Franklin Gothic Bold", "Arial Narrow Bold", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Cash-green GTA money numerals with hard black under-shadow. */
+.hud-cash {
+  font-family: Impact, Haettenschweiler, "Franklin Gothic Bold", "Arial Narrow Bold", sans-serif;
+  color: #8fe39b;
+  letter-spacing: 0.05em;
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 0.9),
+    0 4px 14px rgb(0 0 0 / 0.55),
+    0 0 18px rgb(63 167 88 / 0.35);
+}
+
+/* Cool-white condensed display for BUSTED / mission banners. */
+.hud-gta-white {
+  font-family: Impact, Haettenschweiler, "Franklin Gothic Bold", "Arial Narrow Bold", sans-serif;
+  color: #f4f2ee;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 3px 0 rgb(0 0 0 / 0.92),
+    0 0 24px rgb(0 0 0 / 0.65);
+}
+
+/* BUSTED slow-mo: the whole 3D scene desaturates like GTA's wasted cam. */
+.wasted-scene canvas {
+  filter: grayscale(0.94) contrast(1.1) brightness(0.72);
+  transition: filter 0.85s ease-out;
+}
+
+/* Radar sweep for the HUD minimap. */
+@keyframes radar-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.radar-sweep {
+  animation: radar-sweep 3.4s linear infinite;
+}
+
+/* Warm amber text selection. */

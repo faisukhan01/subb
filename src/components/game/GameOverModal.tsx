@@ -49,7 +49,7 @@ export default function GameOverModal() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto bg-gradient-to-b from-black/55 via-black/70 to-black/85 p-4 backdrop-blur-sm"
+        className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto bg-[radial-gradient(ellipse_at_center,rgba(60,8,8,0.35)_0%,rgba(8,2,2,0.82)_78%)] p-4 backdrop-blur-[2px]"
         role="dialog"
         aria-label="Run results"
       >
@@ -58,31 +58,29 @@ export default function GameOverModal() {
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: "spring", stiffness: 220, damping: 20 }}
-          className="panel-glass w-full max-w-md rounded-3xl p-6"
+          className="panel-glass relative w-full max-w-md rounded-3xl p-6"
         >
-          {/* Stamp — slams in and wobbles to rest */}
+          {/* Stamp — slams in and wobbles to rest (GTA wasted type) */}
           <motion.div
             initial={{ scale: 2.4, opacity: 0, rotate: 10 }}
             animate={{ scale: 1, opacity: 1, rotate: -2 }}
             transition={{ delay: 0.05, type: "spring", stiffness: 260, damping: 11 }}
           >
-            <h2 className="bg-gradient-to-b from-yellow-200 via-orange-400 to-red-500 bg-clip-text text-center font-display text-5xl uppercase tracking-wide text-transparent drop-shadow-[0_4px_0_rgba(0,0,0,0.45)] sm:text-6xl">
-              Busted!
+            <h2 className="hud-gta-white text-center text-6xl leading-none sm:text-7xl">
+              Busted
             </h2>
+            <div
+              aria-hidden
+              className="mx-auto mt-2 h-px w-3/4 bg-gradient-to-r from-transparent via-red-500/70 to-transparent"
+            />
           </motion.div>
 
           {/* Final score */}
           <div className="mt-4 text-center">
-            <div className="text-[10px] font-black uppercase tracking-[0.32em] text-white/50">
+            <div className="font-gta text-[11px] uppercase tracking-[0.32em] text-white/50">
               {isPersonalBest ? "New personal best!" : "Final score"}
             </div>
-            <div
-              className={`mt-0.5 font-display text-5xl tabular-nums sm:text-6xl ${
-                isPersonalBest
-                  ? "bg-gradient-to-b from-yellow-200 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_6px_24px_rgba(245,158,11,0.45)]"
-                  : "text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
-              }`}
-            >
+            <div className="hud-cash mt-0.5 text-5xl tabular-nums sm:text-6xl">
               {formatScore(score)}
             </div>
             {isPersonalBest && (
