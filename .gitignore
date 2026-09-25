@@ -62,3 +62,4 @@ unity/[Ll]ogs/
 unity/[Uu]serSettings/
 *.csproj
 *.sln
+tool-results/
