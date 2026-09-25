@@ -97,7 +97,7 @@ export class World {
   private buildingMatCache = new Map<number, THREE.Material>();
 
   constructor(private deps: WorldDeps) {
-    this.scene.fog = new THREE.Fog(0xf2c498, COLORS.fogNear, COLORS.fogFar);
+    this.scene.fog = new THREE.Fog(0xf3c79b, COLORS.fogNear, COLORS.fogFar);
 
     // Sky dome (golden-hour gradient on the inside of a big sphere)
     const skyGeo = new THREE.SphereGeometry(300, 32, 16);
@@ -110,14 +110,15 @@ export class World {
     this.sky = new THREE.Mesh(skyGeo, skyMat);
     this.scene.add(this.sky);
 
-    this.hemi = new THREE.HemisphereLight(0xc4d6ec, 0x94785e, 1.25);
+    this.hemi = new THREE.HemisphereLight(0xc9d8ea, 0x8a6a4e, 0.78);
     this.scene.add(this.hemi);
-    this.sun = new THREE.DirectionalLight(0xffdcae, 3.1);
-    this.sun.position.set(14, 26, 10);
+    // Low golden sun — long shadows across the ballast, GTA golden-hour drama
+    this.sun = new THREE.DirectionalLight(0xffc98a, 2.6);
+    this.sun.position.set(17, 12.5, 9);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.near = 1;
-    this.sun.shadow.camera.far = 90;
+    this.sun.shadow.camera.far = 95;
     this.sun.shadow.camera.left = -18;
     this.sun.shadow.camera.right = 18;
     this.sun.shadow.camera.top = 18;
@@ -126,7 +127,7 @@ export class World {
     this.scene.add(this.sun);
     this.scene.add(this.sun.target);
     // Soft fill from the camera side so faces never go flat-black
-    const fill = new THREE.DirectionalLight(0xfff0dd, 0.75);
+    const fill = new THREE.DirectionalLight(0xfff0dd, 0.5);
     fill.position.set(-10, 12, 20);
     this.scene.add(fill);
 
@@ -220,6 +221,63 @@ export class World {
       this.scene.add(cloud);
       this.clouds.push(cloud);
     }
+  }
+
+  // ------------------------------------------------------------- palms
+
+  /**
+   * Los Santos palm: curved trunk (stacked slightly-tilted cylinders with
+   * taper) and a crown of drooping fronds. Instanced per chunk with random
+   * lean — the instant “this is a West-Coast city” read.
+   */
+  private buildPalm(rng: () => number): THREE.Group {
+    const g = new THREE.Group();
+    const trunkMat = this.flat(0x74604a, 0.85);
+    const frondMat = this.flat(0x4d6b3a, 0.9);
+    const frondDark = this.flat(0x3d5730, 0.9);
+
+    const segments = 6;
+    const segH = 0.62;
+    let px = 0;
+    let py = 0;
+    const leanDir = rng() * Math.PI * 2;
+    const lean = 0.055 + rng() * 0.05;
+    for (let i = 0; i < segments; i++) {
+      const rBottom = 0.16 * (1 - (i / segments) * 0.45);
+      const rTop = 0.16 * (1 - ((i + 1) / segments) * 0.45);
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, segH, 8), trunkMat);
+      seg.position.set(px, py + segH / 2, 0);
+      seg.rotation.z = Math.cos(leanDir) * lean * (i + 1) * 0.55;
+      seg.rotation.x = Math.sin(leanDir) * lean * (i + 1) * 0.55;
+      seg.castShadow = true;
+      g.add(seg);
+      px += Math.sin(leanDir) * lean * segH * (i + 1) * 0.5;
+      py += segH * 0.985;
+    }
+    // Crown at the trunk tip
+    const crown = new THREE.Group();
+    crown.position.set(px, py + 0.08, 0);
+    g.add(crown);
+    const frondCount = 9;
+    for (let i = 0; i < frondCount; i++) {
+      const a = (i / frondCount) * Math.PI * 2 + rng() * 0.35;
+      const droop = 0.55 + rng() * 0.5;
+      const len = 1.5 + rng() * 0.55;
+      const frond = new THREE.Mesh(new THREE.ConeGeometry(0.22, len, 4), i % 2 ? frondMat : frondDark);
+      frond.scale.set(1, 1, 0.28);
+      frond.position.set(Math.cos(a) * len * 0.42, -Math.abs(Math.sin(a)) * 0.05 + 0.1, Math.sin(a) * len * 0.42);
+      frond.rotation.set(Math.sin(a) * droop, -a, -Math.cos(a) * droop);
+      frond.castShadow = true;
+      crown.add(frond);
+    }
+    // Coconut cluster
+    for (let i = 0; i < 3; i++) {
+      const nut = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), this.flat(0x5d4a30, 0.8));
+      nut.position.set((rng() - 0.5) * 0.16, -0.05, (rng() - 0.5) * 0.16);
+      nut.castShadow = false;
+      crown.add(nut);
+    }
+    return g;
   }
 
   // ------------------------------------------------------------- chunks
@@ -450,6 +508,54 @@ export class World {
       bin.position.set(side * 5.4, PLATFORM_H + 0.36, base + randRange(-10, 10));
       bin.castShadow = true;
       group.add(bin);
+    }
+
+    // ---------- Los Santos palms behind the canopy line
+    {
+      const palmCount = Math.random() < 0.7 ? 1 + Math.floor(Math.random() * 2) : 0;
+      for (let i = 0; i < palmCount; i++) {
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const palm = this.buildPalm(Math.random);
+        palm.position.set(side * (PLATFORM_OUTER - 0.55), PLATFORM_H - 0.05, frontZ - randRange(3, L - 3));
+        palm.scale.setScalar(1.25 + Math.random() * 0.5);
+        palm.rotation.y = Math.random() * Math.PI * 2;
+        group.add(palm);
+      }
+    }
+
+    // ---------- rooftop billboards facing the corridor (Vinewood strip ads)
+    if (this.chunkIndex % 2 === 1) {
+      const side = this.chunkIndex % 4 === 1 ? 1 : -1;
+      const adTex =
+        this.chunkIndex % 4 === 1
+          ? billboardTexture("VOLT ENERGY", "#16181c", "#ffd43b")
+          : billboardTexture("SUBB COLA", "#8c2f26", "#ffe8cc");
+      const adMat = new THREE.MeshStandardMaterial({ map: adTex, roughness: 0.55, emissive: 0xffffff, emissiveIntensity: 0.22, emissiveMap: adTex });
+      const adGeo = new THREE.PlaneGeometry(4.6, 2.1);
+      disposables.push(adGeo);
+      const ad = new THREE.Mesh(adGeo, adMat);
+      ad.position.set(side * (PLATFORM_OUTER + 0.2), PLATFORM_H + 4.35, base + randRange(-5, 5));
+      ad.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      group.add(ad);
+      // steel frame + legs
+      const frameMat = this.flat(0x2b2e33, 0.5, 0.6);
+      for (const fy of [PLATFORM_H + 5.45, PLATFORM_H + 3.25]) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 4.8), frameMat);
+        bar.position.set(side * (PLATFORM_OUTER + 0.2), fy, ad.position.z);
+        group.add(bar);
+      }
+      for (const dz of [-1.9, 1.9]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.25, 8), frameMat);
+        leg.position.set(side * (PLATFORM_OUTER + 0.2), PLATFORM_H + 3.8, ad.position.z + dz);
+        group.add(leg);
+      }
+      // spot bar on top
+      for (const dz of [-1.5, 0, 1.5]) {
+        const spot = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.12, 4, 8), lampMat);
+        spot.position.set(side * (PLATFORM_OUTER + 0.05), PLATFORM_H + 5.55, ad.position.z + dz);
+        spot.castShadow = false;
+        group.add(spot);
+      }
     }
 
     // ---------- brick back walls with graffiti / fence variation

@@ -99,7 +99,7 @@ export class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.32;
+    this.renderer.toneMappingExposure = 1.12;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.style.display = "block";
     this.renderer.domElement.style.touchAction = "none";
@@ -539,19 +539,19 @@ export class Game {
   }
 
   private orbitMenuCamera(): void {
-    // Slow cinematic orbit — low hero angle, gentle float.
+    // Slow cinematic orbit — low hero angle, gentle float (GTA select cam).
     // On wide screens the runner is framed fully clear of the roster cards
     // (right of center); centered on portrait.
-    const a = Math.sin(this.menuTime * 0.14) * 0.55 + 0.35;
-    const r = 5.1;
+    const a = Math.sin(this.menuTime * 0.14) * 0.5 + 0.3;
+    const r = 3.7;
     const wide = this.camera.aspect > 1.05;
-    const pan = wide ? -2.35 : 0;
+    const pan = wide ? -2.0 : 0;
     this.camera.position.set(
       Math.sin(a) * r,
-      1.8 + Math.sin(this.menuTime * 0.4) * 0.15,
+      1.55 + Math.sin(this.menuTime * 0.4) * 0.1,
       Math.cos(a) * r,
     );
-    this.camera.lookAt(pan, wide ? 1.0 : 1.15, 0);
+    this.camera.lookAt(pan, wide ? 1.02 : 1.15, 0);
     if (Math.abs(this.camera.fov - FOV_BASE) > 0.05) {
       this.camera.fov = damp(this.camera.fov, FOV_BASE, 4, 0.016);
       this.camera.updateProjectionMatrix();
@@ -560,8 +560,8 @@ export class Game {
 
   private placeMenuCamera(_t: number): void {
     const wide = this.camera.aspect > 1.05;
-    this.camera.position.set(Math.sin(0.35) * 5.1, 1.8, Math.cos(0.35) * 5.1);
-    this.camera.lookAt(wide ? -2.35 : 0, wide ? 1.0 : 1.15, 0);
+    this.camera.position.set(Math.sin(0.3) * 3.7, 1.55, Math.cos(0.3) * 3.7);
+    this.camera.lookAt(wide ? -2.0 : 0, wide ? 1.02 : 1.15, 0);
   }
 
   // ------------------------------------------------------------- resize
