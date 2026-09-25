@@ -1,10 +1,13 @@
 import * as THREE from "three";
 import { COLORS } from "../Config";
+import { hazardBoardTexture } from "../textures";
 
 /**
  * Jump/roll obstacles with pooled instances.
- *  - LowBarrier: pass by ROLLING under (bar bottom 0.74 m) or jumping over.
- *  - Blockade: solid wall, must be jumped (feet above 1.35 m at contact).
+ *  - LowBarrier: steel work barrier with hazard board — pass by ROLLING
+ *    under (bar bottom 0.74 m) or jumping over.
+ *  - Blockade: framed plywood blockade with chevron panels — must be jumped
+ *    (feet above 1.35 m at contact).
  * Collision volumes are simple AABBs exposed to the Game's solver.
  */
 
@@ -22,52 +25,104 @@ export interface Obstacle {
   active: boolean;
 }
 
+const steelMat = (): THREE.Material =>
+  new THREE.MeshStandardMaterial({ color: 0x565b63, roughness: 0.45, metalness: 0.6 });
+const rubberMat = (): THREE.Material =>
+  new THREE.MeshStandardMaterial({ color: 0x24262a, roughness: 0.85 });
+
 function makeLowBarrierMesh(): THREE.Group {
   const g = new THREE.Group();
-  const frameMat = new THREE.MeshLambertMaterial({ color: COLORS.barrier, flatShading: true });
-  const stripeMat = new THREE.MeshLambertMaterial({ color: COLORS.barrierStripe, flatShading: true });
+  const steel = steelMat();
+  const boardMat = new THREE.MeshStandardMaterial({ map: hazardBoardTexture(), roughness: 0.6 });
+  const rubber = rubberMat();
 
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.34, 0.22), frameMat);
-  bar.position.y = 0.98;
-  bar.castShadow = true;
-  g.add(bar);
+  // Hazard board
+  const board = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.34, 0.1), boardMat);
+  board.position.y = 0.99;
+  board.castShadow = true;
+  g.add(board);
 
-  // Hazard stripes
-  for (let i = 0; i < 4; i++) {
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.36, 0.24), stripeMat);
-    stripe.position.set(-0.75 + i * 0.5, 0.98, 0);
-    stripe.rotation.z = 0.6;
-    g.add(stripe);
+  // Frame: top and bottom rails + vertical stanchions
+  const railTop = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 2.05, 4, 10), steel);
+  railTop.rotation.z = Math.PI / 2;
+  railTop.position.y = 1.19;
+  g.add(railTop);
+  const railBottom = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 2.05, 4, 10), steel);
+  railBottom.rotation.z = Math.PI / 2;
+  railBottom.position.y = 0.78;
+  g.add(railBottom);
+  for (let i = 0; i < 5; i++) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 8), steel);
+    post.position.set(-0.8 + i * 0.4, 0.99, 0.05);
+    post.castShadow = false;
+    g.add(post);
   }
-  for (const sx of [-0.85, 0.85]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.15, 0.2), frameMat);
-    leg.position.set(sx, 0.575, 0);
-    leg.castShadow = true;
-    g.add(leg);
+
+  // A-frame feet (angled steel legs + foot pads)
+  for (const sx of [-0.92, 0.92]) {
+    for (const dir of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.85, 4, 10), steel);
+      leg.position.set(sx, 0.46, dir * 0.28);
+      leg.rotation.x = dir * 0.5;
+      leg.castShadow = true;
+      g.add(leg);
+    }
+    const pad = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.5, 4, 8), rubber);
+    pad.rotation.z = Math.PI / 2;
+    pad.position.set(sx, 0.045, 0);
+    g.add(pad);
   }
   return g;
 }
 
 function makeBlockadeMesh(): THREE.Group {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshLambertMaterial({ color: COLORS.blockade, flatShading: true });
-  const capMat = new THREE.MeshLambertMaterial({ color: 0x862e0c, flatShading: true });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: 0.85 });
+  const woodDark = new THREE.MeshStandardMaterial({ color: 0x5d452e, roughness: 0.9 });
+  const boardMat = new THREE.MeshStandardMaterial({ map: hazardBoardTexture(), roughness: 0.65 });
+  const steel = steelMat();
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.1, 0.5), bodyMat);
-  body.position.y = 0.55;
-  body.castShadow = true;
-  g.add(body);
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.25, 0.6), capMat);
-  cap.position.y = 1.22;
-  cap.castShadow = true;
-  g.add(cap);
-  // Warning chevrons
-  const chevMat = new THREE.MeshLambertMaterial({ color: 0xffe066, flatShading: true });
-  for (let i = 0; i < 3; i++) {
-    const c = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.54), chevMat);
-    c.position.set(-0.6 + i * 0.6, 0.55, 0);
-    c.rotation.z = 0.7;
-    g.add(c);
+  // Plywood panels (two layers, slight offset for depth)
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.06, 0.09), boardMat);
+  panel.position.y = 0.72;
+  panel.castShadow = true;
+  panel.receiveShadow = true;
+  g.add(panel);
+
+  // Timber frame: posts + cross braces
+  for (const sx of [-0.94, 0.94]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.3, 0.14), woodDark);
+    post.position.set(sx, 0.65, 0);
+    post.castShadow = true;
+    g.add(post);
+    // diagonal brace behind
+    const brace = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 1.15, 4, 8), woodMat);
+    brace.position.set(sx - Math.sign(sx) * 0.16, 0.62, -0.14);
+    brace.rotation.z = Math.sign(sx) * 0.5;
+    g.add(brace);
+  }
+  const topRail = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.14, 0.16), woodDark);
+  topRail.position.y = 1.31;
+  topRail.rotation.z = 0.015;
+  topRail.castShadow = true;
+  g.add(topRail);
+  const midRail = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.09, 0.05), woodDark);
+  midRail.position.y = 0.28;
+  g.add(midRail);
+
+  // Top warning lights (small amber lanterns)
+  for (const sx of [-0.6, 0.6]) {
+    const lamp = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055, 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffc078, emissive: 0xe8590c, emissiveIntensity: 1.6 }),
+    );
+    lamp.position.set(sx, 1.46, 0);
+    lamp.castShadow = false;
+    g.add(lamp);
+    const cage = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.07, 0.03, 10), steel);
+    cage.position.set(sx, 1.4, 0);
+    cage.castShadow = false;
+    g.add(cage);
   }
   return g;
 }

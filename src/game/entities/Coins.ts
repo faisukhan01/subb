@@ -38,6 +38,7 @@ export class CoinManager {
     for (let i = 0; i < count; i++) {
       const mesh = new THREE.Mesh(this.geo, this.material);
       mesh.rotation.order = "YXZ";
+      mesh.rotation.x = Math.PI / 2; // face the runner, spin around Y
       mesh.visible = false;
       this.group.add(mesh);
       this.pool.push({
