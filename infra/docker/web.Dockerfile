@@ -21,7 +21,7 @@ COPY . .
 RUN bunx --bun next build
 
 # ---------- Stage 2: run ----------
-FROM node:22-alpine AS run
+FROM node:26-alpine AS run
 WORKDIR /app
 
 ENV NODE_ENV=production \
